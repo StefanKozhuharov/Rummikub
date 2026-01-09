@@ -22,9 +22,6 @@ bool addToHand(Player& player, Tile tile) {
 
 bool drawPlayerHand(Player& player) {
 
-	player.handCount = 0;
-	player.hasInitial30 = false;
-
 	for (int i = 0; i < INITIAL_HAND_SIZE; i++) {
 
 		Tile tile;
