@@ -4,7 +4,7 @@ const int MIN_TILE_VALUE = 1;
 const int MAX_TILE_VALUE = 13;
 const int JOKER_VALUE = 0;
 
-enum Color {
+enum Colour {
 
     ORANGE,
     RED,
@@ -16,7 +16,7 @@ enum Color {
 struct Tile {
 
     int value;
-    Color color;
+    Colour colour;
 
 };
 

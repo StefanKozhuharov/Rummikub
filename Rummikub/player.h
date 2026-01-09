@@ -12,5 +12,5 @@ struct Player {
 
 };
 
-void addToHand(Player& player, Tile tile);
-void drawPlayerHand(Player& player);
+bool addToHand(Player& player, Tile tile);
+bool drawPlayerHand(Player& player);

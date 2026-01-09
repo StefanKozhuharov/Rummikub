@@ -2,7 +2,7 @@
 #include <iostream>
 using namespace std;
 
-void addToHand(Player& player, Tile tile) {
+bool addToHand(Player& player, Tile tile) {
 
 	if (player.handCount < DECK_SIZE) {
 
@@ -12,13 +12,15 @@ void addToHand(Player& player, Tile tile) {
 	}
 	else {
 
-		cout << "Your hand is full!" << endl;
+		return false;
 
 	}
 
+	return true;
+
 }
 
-void drawPlayerHand(Player& player) {
+bool drawPlayerHand(Player& player) {
 
 	player.handCount = 0;
 	player.hasInitial30 = false;
@@ -26,18 +28,20 @@ void drawPlayerHand(Player& player) {
 	for (int i = 0; i < INITIAL_HAND_SIZE; i++) {
 
 		Tile tile;
-		if (drawTile(tile)) {
+		if (!drawTile(tile)) {
 
-			addToHand(player, tile);
+			return false;
 
 		}
-		else {
+		
+		if (!addToHand(player, tile)) {
 
-			cout << "There are no tiles left!" << endl;
-			break;
+			return false;
 
 		}
 
 	}
+
+	return true;
 
 }

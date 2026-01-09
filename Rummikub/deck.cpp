@@ -10,12 +10,12 @@ void initDeck() {
 
     for (int i = 0; i < 2; i++) {
 
-        for (int color = ORANGE; color <= BLACK; color++) {
+        for (int colour = ORANGE; colour <= BLACK; colour++) {
 
             for (int value = 1; value <= MAX_TILE_VALUE; value++) {
 
                 deck[remainingTiles].value = value;
-                deck[remainingTiles].color = (Color)color;
+                deck[remainingTiles].colour = (Colour)colour;
                 remainingTiles++;
 
             }
