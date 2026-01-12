@@ -14,30 +14,32 @@ int main()
     shuffleDeck();
 
     int numPlayers = chooseNumberOfPlayers();
-
     Player players[MAX_PLAYERS];
 
     if (!initializePlayers(players, numPlayers)) {
 
-        cout << "Game cannot start: not enough tiles for initial hands." << endl;
+        cout << "Game cannot start." << endl;
         return 1;
 
     }
 
-    int selectedTiles[INITIAL_HAND_SIZE]; 
-    int count = 0;
+    int playerIndex = 0;
 
-    cout << endl << "Player 1, select your tiles:" << endl;
-    readTileSelection(players[0], selectedTiles, count);
+    while (true) {
 
-    cout << "Tiles chosen by player 1: ";
-    for (int i = 0; i < count; i++) {
+        playTurn(players[playerIndex], playerIndex);
 
-        printTile(players[0].hand[selectedTiles[i]]);
-        cout << " ";
+        //TODO: add check for when the game ends
+
+        playerIndex++;
+
+        if (playerIndex == numPlayers) {
+
+            playerIndex = 0;
+
+        }
 
     }
-    cout << endl;
 
     return 0;
 

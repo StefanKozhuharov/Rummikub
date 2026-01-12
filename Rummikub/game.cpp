@@ -46,7 +46,7 @@ bool initializePlayers(Player players[], int numPlayers) {
 
 }
 
-bool confirmSelectedTiles(Player player, int selectedTiles[], int count) {
+bool confirmSelectedTiles(const Player& player, int selectedTiles[], int count) {
 
 	char confirm;
 
@@ -59,11 +59,11 @@ bool confirmSelectedTiles(Player player, int selectedTiles[], int count) {
 	}
 	cout << endl;
 
-	cout << "Are you sure? (y/n): ";
-	cin >> confirm;
-	cin.ignore(1024, '\n');
-
 	while (true) {
+
+		cout << "Are you sure? (y/n): ";
+		cin >> confirm;
+		cin.ignore(1024, '\n');
 
 		if (confirm == 'Y' || confirm == 'y') {
 
@@ -86,13 +86,15 @@ bool confirmSelectedTiles(Player player, int selectedTiles[], int count) {
 
 }
 
-void readTileSelection(const Player& player, int selectedTiles[], int& count) {
+void readTileSelection(const Player& player, int selectedTiles[], int& count) { 
 
 	const int MAX_INPUT = 1024;
 	char input[MAX_INPUT];
 	bool hasConfirmed = false;
 
 	while (!hasConfirmed) {
+
+		count = 0;
 
 		printHand(player);
 
@@ -135,6 +137,115 @@ void readTileSelection(const Player& player, int selectedTiles[], int& count) {
 		}
 
 		hasConfirmed = confirmSelectedTiles(player, selectedTiles, count);
+
+	}
+
+}
+
+int chooseTurnAction() {
+
+	int choice = 0;
+
+	while (choice != 1 && choice != 2) {
+
+		cout << "Choose Action" << endl << "1 - Play tiles" << endl << "2 - Draw a tile" << endl << "Your choice: ";
+		cin >> choice;
+		cin.ignore(1024, '\n');
+
+	}
+
+	return choice;
+
+}
+
+bool drawTileForPlayer(Player& player) {
+
+	Tile tile;
+
+	if (!drawTile(tile)) {
+
+		cout << "No tiles left in the deck!" << endl;
+		return false;
+
+	}
+
+	if (!addToHand(player, tile)) {
+
+		cout << "Your hand is full!" << endl;
+		return false;
+
+	}
+
+	cout << "You drew: ";
+	printTile(tile);
+	cout << endl;
+
+	return true;
+
+}
+
+void playTurn(Player& player, int playerIndex) {
+
+	cout << endl << "--- Player " << playerIndex + 1 << "'s turn ---" << endl;
+	printHand(player);
+
+	int action = chooseTurnAction();
+
+	if (action == 2) {
+
+		drawTileForPlayer(player);
+		return;
+
+	}
+
+	int selectedTiles[DECK_SIZE];
+	int count = 0;
+
+	readTileSelection(player, selectedTiles, count);
+
+	cout << "Player " << playerIndex + 1 << " played: ";
+	for (int i = 0; i < count; i++) {
+
+		printTile(player.hand[selectedTiles[i]]);
+		cout << " ";
+
+	}
+
+	cout << endl;
+
+	removeSelectedTiles(player, selectedTiles, count);
+
+}
+
+void removeSelectedTiles(Player& player, int selectedTiles[], int count) {
+
+	for (int i = 0; i < count - 1; i++) {
+
+		for (int j = i + 1; j < count; j++) {
+
+			if (selectedTiles[i] < selectedTiles[j]) {
+
+				int temp = selectedTiles[i];
+				selectedTiles[i] = selectedTiles[j];
+				selectedTiles[j] = temp;
+
+			}
+
+		}
+
+	}
+
+	for (int i = 0; i < count; i++) {
+
+		int index = selectedTiles[i];
+
+		for (int j = index; j < player.handCount - 1; j++) {
+
+			player.hand[j] = player.hand[j + 1];
+
+		}
+
+		player.handCount--;
 
 	}
 
