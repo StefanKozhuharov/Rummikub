@@ -46,7 +46,14 @@ bool initializePlayers(Player players[], int numPlayers) {
 
 }
 
-bool confirmSelectedTiles(const Player& player, int selectedTiles[], int count) {
+int confirmSelectedTiles(const Player& player, int selectedTiles[], int count) {
+
+	if (count == 0) {
+
+		cout << "You didn't select any tiles!" << endl;
+		return false;
+
+	}
 
 	char confirm;
 
@@ -61,51 +68,60 @@ bool confirmSelectedTiles(const Player& player, int selectedTiles[], int count) 
 
 	while (true) {
 
-		cout << "Are you sure? (y/n): ";
+		cout << "Are you sure? (y = play, n = reselect, d = draw tile): ";
 		cin >> confirm;
 		cin.ignore(1024, '\n');
 
 		if (confirm == 'Y' || confirm == 'y') {
 
-			return true;
+			return 1;
 
 		}
-		else if (confirm == 'N' || confirm == 'n') {
+		if (confirm == 'N' || confirm == 'n') {
 
 			cout << "Let's try again" << endl;
-			return false;
+			return 0;
 
 		}
-		else {
+		if (confirm == 'D' || confirm == 'd') {
 
-			cout << "Invalid input!" << endl;
+			return -1;
 
 		}
+
+		cout << "Invalid input!" << endl;
 
 	}
 
 }
 
-void readTileSelection(const Player& player, int selectedTiles[], int& count) { 
+bool readTileSelection(const Player& player, int selectedTiles[], int& count) { 
 
 	const int MAX_INPUT = 1024;
 	char input[MAX_INPUT];
-	bool hasConfirmed = false;
 
-	while (!hasConfirmed) {
+	while (true) {
 
 		count = 0;
-
 		printHand(player);
 
-		cout << "Enter the indexes of the tiles you want to play (e.g. 1 3 5 or 123): ";
+		cout << "Enter the indexes of the tiles you want to play (e.g. 1 3 5): ";
 		cin.getline(input, MAX_INPUT);
 
 		for (int i = 0; input[i] != '\0'; i++) {
 
 			if (isDigit(input[i])) {
 
-				int index = (input[i] - '0') - 1;
+				int number = 0;
+
+				while (isDigit(input[i])) {
+
+					number = number * 10 + (input[i] - '0');
+					i++;
+
+				}
+
+				int index = number - 1;
 
 				if (index >= 0 && index < player.handCount) {
 
@@ -136,7 +152,18 @@ void readTileSelection(const Player& player, int selectedTiles[], int& count) {
 
 		}
 
-		hasConfirmed = confirmSelectedTiles(player, selectedTiles, count);
+		int decision = confirmSelectedTiles(player, selectedTiles, count);
+
+		if (decision == 1) {
+
+			return true;
+
+		}
+		if (decision == -1) {
+
+			return false;
+
+		}
 
 	}
 
@@ -187,33 +214,55 @@ bool drawTileForPlayer(Player& player) {
 void playTurn(Player& player, int playerIndex) {
 
 	cout << endl << "--- Player " << playerIndex + 1 << "'s turn ---" << endl;
-	printHand(player);
 
-	int action = chooseTurnAction();
+	while (true) {
 
-	if (action == 2) {
+		printHand(player);
 
-		drawTileForPlayer(player);
+		int action = chooseTurnAction();
+
+		if (action == 2) {
+
+			drawTileForPlayer(player);
+			return;
+
+		}
+
+		int selectedTiles[DECK_SIZE];
+		int count = 0;
+
+		bool wantsToPlay = readTileSelection(player, selectedTiles, count);
+
+		if (!wantsToPlay) {
+
+			drawTileForPlayer(player);
+			return;
+
+		}
+
+		if (!checkInitial30(player, selectedTiles, count)) {
+
+			cout << "Please select tiles again or draw a tile." << endl;
+			continue;
+
+		}
+
+		//TODO validate the selected tiles after the initial 30
+
+		cout << "Player " << playerIndex + 1 << " played: ";
+		for (int i = 0; i < count; i++) {
+
+			printTile(player.hand[selectedTiles[i]]);
+			cout << " ";
+
+		}
+
+		cout << endl;
+
+		removeSelectedTiles(player, selectedTiles, count);
 		return;
 
 	}
-
-	int selectedTiles[DECK_SIZE];
-	int count = 0;
-
-	readTileSelection(player, selectedTiles, count);
-
-	cout << "Player " << playerIndex + 1 << " played: ";
-	for (int i = 0; i < count; i++) {
-
-		printTile(player.hand[selectedTiles[i]]);
-		cout << " ";
-
-	}
-
-	cout << endl;
-
-	removeSelectedTiles(player, selectedTiles, count);
 
 }
 
@@ -248,5 +297,123 @@ void removeSelectedTiles(Player& player, int selectedTiles[], int count) {
 		player.handCount--;
 
 	}
+
+}
+
+bool isGameOver(Player players[], int numPlayers, int& winnerIndex) {
+
+	for (int i = 0; i < numPlayers; i++) {
+
+		if (players[i].handCount == 0) {
+
+			winnerIndex = i;
+			return true;
+
+		}
+
+	}
+
+	if (remainingTiles == 0) {
+
+		winnerIndex = findWinnerByLowestScore(players, numPlayers);
+		return true;
+
+	}
+
+	return false;
+
+}
+
+int calculateHandPoints(const Player& player) {
+
+	int sum = 0;
+
+	for (int i = 0; i < player.handCount; i++) {
+
+		if (player.hand[i].value == JOKER_VALUE) {
+
+			sum += 30;
+
+		}
+		else {
+
+			sum += player.hand[i].value;
+
+		}
+
+	}
+
+	return sum;
+
+}
+
+int findWinnerByLowestScore(Player players[], int numPlayers) {
+
+	int winnerIndex = 0;
+	int lowestScore = calculateHandPoints(players[0]);
+
+	for (int i = 1; i < numPlayers; i++) {
+
+		int currentScore = calculateHandPoints(players[i]);
+
+		if (currentScore < lowestScore) {
+
+			lowestScore = currentScore;
+			winnerIndex = i;
+
+		}
+
+	}
+
+	return winnerIndex;
+
+}
+
+bool checkInitial30(Player& player, const int selectedTiles[], int count) {
+
+	if (player.hasInitial30) {
+
+		return true;
+
+	}
+
+	int points = calculateSelectedTilesPoints(player, selectedTiles, count);
+
+	if (points >= 30) {
+
+		player.hasInitial30 = true;
+		return true;
+
+	}
+
+	cout << "You must play at least 30 points on your first move!" << endl << "You played only " << points << " points." << endl;
+
+	return false;
+
+}
+
+int calculateSelectedTilesPoints(const Player& player, const int selectedTiles[], int count) {
+
+	int sum = 0;
+
+	for (int i = 0; i < count; i++) {
+
+		int index = selectedTiles[i];
+		int value = player.hand[index].value;
+
+		if (value == JOKER_VALUE) {
+
+			sum += 30;
+
+		}
+		else {
+
+			sum += value;
+
+		}
+
+	}
+
+	return sum;
 
 }

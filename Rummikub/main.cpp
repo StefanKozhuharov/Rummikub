@@ -10,6 +10,8 @@ using namespace std;
 int main()
 {
     
+    srand(time(nullptr));
+
     initDeck();
     shuffleDeck();
 
@@ -23,21 +25,30 @@ int main()
 
     }
 
-    int playerIndex = 0;
+    int currentPlayer = 0;
+    int winnerIndex = -1;
 
-    while (true) {
+    while (!isGameOver(players, numPlayers, winnerIndex)) {
 
-        playTurn(players[playerIndex], playerIndex);
+        playTurn(players[currentPlayer], currentPlayer);
 
-        //TODO: add check for when the game ends
+        currentPlayer++;
 
-        playerIndex++;
+        if (currentPlayer == numPlayers) {
 
-        if (playerIndex == numPlayers) {
-
-            playerIndex = 0;
+            currentPlayer = 0;
 
         }
+
+    }
+
+    cout << endl << "=== GAME OVER ===" << endl;
+    cout << "Winner is Player " << winnerIndex + 1 << endl;
+    
+    cout << "Final scores:" << endl;
+    for (int i = 0; i < numPlayers; i++) {
+
+        cout << "Player " << i + 1 << ": " << calculateHandPoints(players[i]) << " points" << endl;
 
     }
 
