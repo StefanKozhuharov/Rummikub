@@ -240,14 +240,19 @@ void playTurn(Player& player, int playerIndex) {
 
 		}
 
+		if (!isValidCombination(player, selectedTiles, count)) {
+
+			cout << "Invalid combination!" << endl;
+			continue;
+
+		}
+
 		if (!checkInitial30(player, selectedTiles, count)) {
 
 			cout << "Please select tiles again or draw a tile." << endl;
 			continue;
 
 		}
-
-		//TODO validate the selected tiles after the initial 30
 
 		cout << "Player " << playerIndex + 1 << " played: ";
 		for (int i = 0; i < count; i++) {
@@ -415,5 +420,141 @@ int calculateSelectedTilesPoints(const Player& player, const int selectedTiles[]
 	}
 
 	return sum;
+
+}
+
+bool isValidGroup(const Player& player, const int selectedTiles[], int count) {
+
+	if (count < 3 || count > 4) {
+
+		return false;
+
+	}
+
+	bool usedColours[4] = { false, false, false, false };
+	int jokers = 0;
+	int value = -1;
+
+	for (int i = 0; i < count; i++) {
+
+		Tile tile = player.hand[selectedTiles[i]];
+
+		if (tile.value == JOKER_VALUE) {
+
+			jokers++;
+			continue;
+
+		}
+
+		if (value == -1) {
+
+			value = tile.value;
+
+		}
+		else if (tile.value != value) {
+
+			return false;
+
+		}
+
+		if (usedColours[tile.colour]) {
+
+			return false;
+
+		}
+
+		usedColours[tile.colour] = true;
+
+	}
+
+	int nonJokers = count - jokers;
+
+	return (nonJokers + jokers >= 3 && nonJokers + jokers <= 4);
+
+}
+
+bool isValidSeries(const Player& player, const int selectedTiles[], int count) {
+
+	if (count < 3) {
+
+		return false;
+
+	}
+
+	int values[DECK_SIZE];
+	int valueCount = 0;
+	int jokers = 0;
+	Colour colour = ORANGE;
+	bool colourSet = false;
+
+	for (int i = 0; i < count; i++) {
+
+		Tile tile = player.hand[selectedTiles[i]];
+
+		if (tile.value == JOKER_VALUE) {
+
+			jokers++;
+			continue;
+
+		}
+
+		if (!colourSet) {
+
+			colour = tile.colour;
+			colourSet = true;
+
+		}
+		else if (tile.colour != colour) {
+
+			return false;
+
+		}
+
+		for (int j = 0; j < valueCount; j++) {
+
+			if (values[j] == tile.value) {
+
+				return false;
+
+			}
+
+		}
+
+		values[valueCount] = tile.value;
+		valueCount++;
+
+	}
+
+	for (int i = 0; i < valueCount - 1; i++) {
+
+		for (int j = i + 1; j < valueCount; j++) {
+
+			if (values[i] > values[j]) {
+
+				int temp = values[i];
+				values[i] = values[j];
+				values[j] = temp;
+
+			}
+
+		}
+
+	}
+
+	int gaps = 0;
+
+	for (int i = 1; i < valueCount - 1; i++) {
+
+		gaps += (values[i + 1] - values[i] - 1);
+
+	}
+
+	return gaps <= jokers;
+
+}
+
+bool isValidCombination(const Player& player, const int selectedTiles[], int count) {
+
+	return isValidGroup(player, selectedTiles, count) || isValidSeries(player, selectedTiles, count);
 
 }

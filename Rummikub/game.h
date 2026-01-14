@@ -19,3 +19,6 @@ int calculateHandPoints(const Player& player);
 int findWinnerByLowestScore(Player players[], int numPlayers);
 bool checkInitial30(Player& player, const int selectedTiles[], int count);
 int calculateSelectedTilesPoints(const Player& player, const int selectedTiles[], int count);
+bool isValidCombination(const Player& player, const int selectedTiles[], int count);
+bool isValidGroup(const Player& player, const int selectedTiles[], int count);
+bool isValidSeries(const Player& player, const int selectedTiles[], int count);
