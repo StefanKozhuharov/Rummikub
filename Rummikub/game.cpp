@@ -46,129 +46,6 @@ bool initializePlayers(Player players[], int numPlayers) {
 
 }
 
-//int confirmSelectedTiles(const Player& player, int selectedTiles[], int count) {
-//
-//	if (count == 0) {
-//
-//		cout << "You didn't select any tiles!" << endl;
-//		return false;
-//
-//	}
-//
-//	char confirm;
-//
-//	cout << "You selected: ";
-//	for (int i = 0; i < count; i++) {
-//
-//		printTile(player.hand[selectedTiles[i]]);
-//		cout << " ";
-//
-//	}
-//	cout << endl;
-//
-//	while (true) {
-//
-//		cout << "Are you sure? (y = play, n = reselect, d = draw tile): ";
-//		cin >> confirm;
-//		cin.ignore(1024, '\n');
-//
-//		if (confirm == 'Y' || confirm == 'y') {
-//
-//			return 1;
-//
-//		}
-//		if (confirm == 'N' || confirm == 'n') {
-//
-//			cout << "Let's try again" << endl;
-//			return 0;
-//
-//		}
-//		if (confirm == 'D' || confirm == 'd') {
-//
-//			return -1;
-//
-//		}
-//
-//		cout << "Invalid input!" << endl;
-//
-//	}
-//
-//}
-
-//bool readTileSelection(const Player& player, int selectedTiles[], int& count) { 
-//
-//	const int MAX_INPUT = 1024;
-//	char input[MAX_INPUT];
-//
-//	while (true) {
-//
-//		count = 0;
-//		printHand(player);
-//
-//		cout << "Enter the indexes of the tiles you want to play (e.g. 1 3 5): ";
-//		cin.getline(input, MAX_INPUT);
-//
-//		for (int i = 0; input[i] != '\0'; i++) {
-//
-//			if (isDigit(input[i])) {
-//
-//				int number = 0;
-//
-//				while (isDigit(input[i])) {
-//
-//					number = number * 10 + (input[i] - '0');
-//					i++;
-//
-//				}
-//
-//				int index = number - 1;
-//
-//				if (index >= 0 && index < player.handCount) {
-//
-//					bool alreadySelected = false;
-//
-//					for (int j = 0; j < count; j++) {
-//
-//						if (selectedTiles[j] == index) {
-//
-//							alreadySelected = true;
-//							break;
-//
-//						}
-//
-//					}
-//
-//					if (!alreadySelected) {
-//
-//						selectedTiles[count] = index;
-//						count++;
-//
-//					}
-//
-//				}
-//
-//			}
-//
-//
-//		}
-//
-//		int decision = confirmSelectedTiles(player, selectedTiles, count);
-//
-//		if (decision == 1) {
-//
-//			return true;
-//
-//		}
-//		if (decision == -1) {
-//
-//			return false;
-//
-//		}
-//
-//	}
-//
-//}
-
 int chooseTurnAction() {
 
 	int choice = 0;
@@ -247,9 +124,14 @@ void playTurn(Player& player, int playerIndex) {
 
 		}
 
-		//TODO checkInitial30Multiple
+		if (!checkInitial30Multiple(player, combinations, combinationCount)) {
 
-		cout << "Player " << playerIndex + 1 << " played: ";
+			cout << "Please select tiles again or draw a tile." << endl;
+			continue;
+
+		}
+
+		cout << "Player " << playerIndex + 1 << " played:" << endl;
 		for (int c = 0; c < combinationCount; c++) {
 
 			cout << "Combination " << c + 1 << ": ";
@@ -266,7 +148,7 @@ void playTurn(Player& player, int playerIndex) {
 
 		cout << endl;
 
-		//TODO remove multipleSelectedTiles
+		removeMultipleSelectedTiles(player, combinations, combinationCount);
 		return;
 
 	}
@@ -373,29 +255,6 @@ int findWinnerByLowestScore(Player players[], int numPlayers) {
 	}
 
 	return winnerIndex;
-
-}
-
-bool checkInitial30(Player& player, const int selectedTiles[], int count) {
-
-	if (player.hasInitial30) {
-
-		return true;
-
-	}
-
-	int points = calculateSelectedTilesPoints(player, selectedTiles, count);
-
-	if (points >= 30) {
-
-		player.hasInitial30 = true;
-		return true;
-
-	}
-
-	cout << "You must play at least 30 points on your first move!" << endl << "You played only " << points << " points." << endl;
-
-	return false;
 
 }
 
@@ -545,7 +404,7 @@ bool isValidSeries(const Player& player, const int selectedTiles[], int count) {
 
 	int gaps = 0;
 
-	for (int i = 1; i < valueCount - 1; i++) {
+	for (int i = 0; i < valueCount - 1; i++) {
 
 		gaps += (values[i + 1] - values[i] - 1);
 
@@ -580,90 +439,19 @@ bool readMultipleTileSelection(const Player& player, Combination combinations[],
 
 	while (true) {
 
-		combinationCount = 0;
-
-		cout << "Enter tile indexes (use | to separate, e.g. 1 2 3 | 4 5 6): ";
+		cout << "Enter tile indexes (use | to seperate, e.g. 1 2 3 | 4 5 6): ";
 		cin.getline(input, MAX_INPUT);
 
-		int i = 0;
-		while (input[i] != '\0') {
+		parseMultipleTileSelection(player, input, combinations, combinationCount);
 
-			combinations[combinationCount].count = 0;
+		int decision = confirmSelectedCombinations(player, combinations, combinationCount);
 
-			while (input[i] != '\0' && input[i] != '|') {
-
-				if (isDigit(input[i])) {
-
-					int number = 0;
-					while (isDigit(input[i])) {
-
-						number = number * 10 + (input[i] - '0');
-						i++;
-
-					}
-
-					int index = number - 1;
-
-					if (index >= 0 && index < player.handCount) {
-
-						bool alreadySelected = false;
-
-						for (int c = 0; c <= combinationCount; c++) {
-
-							for (int t = 0; t < combinations[c].count; t++) {
-
-								if (combinations[c].tiles[t] == index) {
-
-									alreadySelected = true;
-
-								}
-
-							}
-
-						}
-
-						if (!alreadySelected) {
-
-							combinations[combinationCount].tiles[combinations[combinationCount].count++] = index;
-
-						}
-
-					}
-
-				}
-				else {
-
-					i++;
-
-				}
-
-			}
-
-			if (combinations[combinationCount].count > 0) {
-
-				combinationCount++;
-
-			}
-
-			if (input[i] == '|') {
-
-				i++;
-
-			}
-
-		}
-
-		char confirm;
-		cout << "Are you sure? (y = play, n = reselect, d = draw): ";
-		cin >> confirm;
-		cin.ignore(1024, '\n');
-
-		if (confirm == 'y' || confirm == 'Y') {
+		if (decision == 1) {
 
 			return true;
 
 		}
-		if (confirm == 'd' || confirm == 'D') {
+		if (decision == -1) {
 
 			return false;
 
@@ -673,6 +461,198 @@ bool readMultipleTileSelection(const Player& player, Combination combinations[],
 
 	}
 
-	//TODO split this into multiple functions like the old readTiles and confirmSelection
+}
+
+int calculateMultipleSelectedTilesPoints(const Player& player, const Combination combinations[], int combinationCount) {
+
+	int total = 0;
+
+	for (int c = 0; c < combinationCount; c++) {
+
+		total += calculateSelectedTilesPoints(player, combinations[c].tiles, combinations[c].count);
+
+	}
+
+	return total;
+
+}
+
+bool checkInitial30Multiple(Player& player, const Combination combinations[], int combinationCount) {
+
+	if (player.hasInitial30) {
+
+		return true;
+
+	}
+
+	int points = calculateMultipleSelectedTilesPoints(player, combinations, combinationCount);
+
+	if (points >= 30) {
+
+		player.hasInitial30 = true;
+		return true;
+
+	}
+
+	cout << "You must play at least 30 points on your first move!" << endl << "You played only " << points << " points." << endl;
+
+	return false;
+
+}
+
+int confirmSelectedCombinations(const Player& player, const Combination combinations[], int combinationCount) {
+
+	if (combinationCount == 0) {
+
+		cout << "You didn't select any tiles!" << endl;
+		return 0;
+
+	}
+
+	cout << "You selected: " << endl;
+
+	for (int c = 0; c < combinationCount; c++) {
+
+		cout << "Combination " << c + 1 << ": ";
+		for (int t = 0; t < combinations[c].count; t++) {
+
+			printTile(player.hand[combinations[c].tiles[t]]);
+			cout << " ";
+
+		}
+
+		cout << endl;
+
+	}
+
+	char confirm;
+
+	while (true) {
+
+		cout << "Are you sure? (y = play, n = reselect, d = draw tile): ";
+		cin >> confirm;
+		cin.ignore(1024, '\n');
+
+		if (confirm == 'y' || confirm == 'Y') {
+
+			return 1;
+
+		}
+		else if (confirm == 'n' || confirm == 'N') {
+
+			return 0;
+
+		}
+		else if (confirm == 'd' || confirm == 'D') {
+
+			return -1;
+
+		}
+
+		cout << "Invalid data!" << endl;
+
+	}
+
+}
+
+void parseMultipleTileSelection(const Player& player, const char input[], Combination combinations[], int& combinationCount) {
+
+	combinationCount = 0;
+
+	int i = 0;
+
+	while (input[i] != '\0') {
+
+		combinations[combinationCount].count = 0;
+
+		while (input[i] != '\0' && input[i] != '|') {
+
+			if (isDigit(input[i])) {
+
+				int number = 0;
+
+				while (isDigit(input[i])) {
+
+					number = number * 10 + (input[i] - '0');
+					i++;
+
+				}
+
+				int index = number - 1;
+
+				if (index >= 0 && index < player.handCount) {
+
+					bool alreadySelected = false;
+
+					for (int c = 0; c <= combinationCount; c++) {
+
+						for (int t = 0; t < combinations[c].count; t++) {
+
+							if (combinations[c].tiles[t] == index) {
+
+								alreadySelected = true;
+								break;
+
+							}
+
+						}
+						
+						if (alreadySelected) {
+
+							break;
+
+						}
+
+					}
+
+					if (!alreadySelected) {
+
+						combinations[combinationCount].tiles[combinations[combinationCount].count++] = index;
+
+					}
+
+				}
+
+			}
+			else {
+
+				i++;
+
+			}
+
+		}
+
+		if (combinations[combinationCount].count > 0) {
+
+			combinationCount++;
+
+		}
+
+		if (input[i] == '|') {
+
+			i++;
+
+		}
+
+	}
+
+}
+
+void removeMultipleSelectedTiles(Player& player, const Combination combinations[], int combinationCount) {
+
+	int allSelected[DECK_SIZE];
+	int totalCount = 0;
+
+	for (int c = 0; c < combinationCount; c++) {
+
+		for (int t = 0; t < combinations[c].count; t++) {
+
+			allSelected[totalCount++] = combinations[c].tiles[t];
+
+		}
+
+	}
+
+	removeSelectedTiles(player, allSelected, totalCount);
 
 }
