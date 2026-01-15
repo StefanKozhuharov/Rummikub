@@ -50,9 +50,9 @@ int chooseTurnAction() {
 
 	int choice = 0;
 
-	while (choice != 1 && choice != 2) {
+	while (choice < 1 || choice > 3) {
 
-		cout << "Choose Action" << endl << "1 - Play tiles" << endl << "2 - Draw a tile" << endl << "Your choice: ";
+		cout << "Choose Action" << endl << "1 - Play tiles" << endl << "2 - Draw a tile" << endl << "3 - Add tile(s) to existing table combination" << endl << "Your choice: ";
 		cin >> choice;
 		cin.ignore(1024, '\n');
 
@@ -88,12 +88,13 @@ bool drawTileForPlayer(Player& player) {
 
 }
 
-void playTurn(Player& player, int playerIndex) {
+void playTurn(Player& player, int playerIndex, Table& table) {
 
 	cout << endl << "--- Player " << playerIndex + 1 << "'s turn ---" << endl;
 
 	while (true) {
 
+		printTable(table);
 		printHand(player);
 
 		int action = chooseTurnAction();
@@ -102,6 +103,34 @@ void playTurn(Player& player, int playerIndex) {
 
 			drawTileForPlayer(player);
 			return;
+
+		}
+
+		if (action == 3 && !player.hasInitial30) {
+
+			cout << "You must first place initial 30 points using only your hand." << endl;
+			continue;
+
+		}
+
+		if (action == 3) {
+
+			int decision = addTilesToTableCombination(player, table);
+			if (decision == -1) {
+
+				drawTileForPlayer(player);
+				return;
+
+			}
+
+			if (decision == 1) {
+
+				return;
+
+			}
+
+			cout << "Couldn't add tiles. Try again or choose another action." << endl;
+			continue;
 
 		}
 
@@ -147,6 +176,13 @@ void playTurn(Player& player, int playerIndex) {
 		}
 
 		cout << endl;
+
+		if (!addCombinationsToTable(player, table, combinations, combinationCount)) {
+
+			cout << "Failed to place combinations on the table." << endl;
+			continue;
+
+		}
 
 		removeMultipleSelectedTiles(player, combinations, combinationCount);
 		return;
@@ -654,5 +690,371 @@ void removeMultipleSelectedTiles(Player& player, const Combination combinations[
 	}
 
 	removeSelectedTiles(player, allSelected, totalCount);
+
+}
+
+bool addCombinationsToTable(const Player& player, Table& table, const Combination combinations[], int combinationCount) {
+
+	if (table.count + combinationCount > MAX_TABLE_COMBINATIONS) {
+
+		cout << "Table is full! Cannot place more combinations." << endl;
+		return false;
+
+	}
+
+	for (int c = 0; c < combinationCount; c++) {
+
+		TableCombination newCombo;
+		newCombo.count = 0;
+
+		for (int t = 0; t < combinations[c].count; t++) {
+
+			int handIndex = combinations[c].tiles[t];
+
+			if (handIndex < 0 || handIndex >= player.handCount) {
+
+				cout << "Invalid hand index while placing combination!" << endl;
+				return false;
+
+			}
+
+			newCombo.tiles[newCombo.count++] = player.hand[handIndex];
+
+		}
+
+		table.combos[table.count++] = newCombo;
+
+	}
+
+	return true;
+
+}
+
+int chooseTableCombinationIndex(const Table& table) {
+
+	if (table.count == 0) {
+
+		return -1;
+
+	}
+
+	int choice = 0;
+
+	while (choice < 1 || choice > table.count) {
+
+		cout << "Choose table combination (1-" << table.count << "): ";
+		cin >> choice;
+		cin.ignore(1024, '\n');
+
+	}
+
+	return choice - 1;
+
+}
+
+bool isValidGroupTiles(const Tile tiles[], int count) {
+
+	if (count < 3 || count > 4) {
+
+		return false;
+
+	}
+
+	bool usedColours[4] = { false, false, false, false };
+	int jokers = 0;
+	int value = -1;
+
+	for (int i = 0; i < count; i++) {
+
+		if (tiles[i].value == JOKER_VALUE) {
+
+			jokers++;
+			continue;
+
+		}
+
+		if (value == -1) {
+
+			value = tiles[i].value;
+
+		}
+		else if (tiles[i].value != value) {
+
+			return false;
+
+		}
+		
+		if (usedColours[tiles[i].colour]) {
+
+			return false;
+
+		}
+
+		usedColours[tiles[i].colour] = true;
+
+	}
+
+	int nonJokers = count - jokers;
+	return (nonJokers + jokers >= 3 && nonJokers + jokers <= 4);
+
+}
+
+bool isValidSeriesTiles(const Tile tiles[], int count) {
+
+	if (count < 3) {
+
+		return false;
+
+	}
+
+	int values[DECK_SIZE];
+	int valueCount = 0;
+	int jokers = 0;
+	Colour colour = ORANGE;
+	bool colourSet = false;
+
+	for (int i = 0; i < count; i++) {
+
+		if (tiles[i].value == JOKER_VALUE) {
+
+			jokers++;
+			continue;
+
+		}
+
+		if (!colourSet) {
+
+			colour = tiles[i].colour;
+			colourSet = true;
+
+		}
+		else if (tiles[i].colour != colour) {
+
+			return false;
+
+		}
+
+		for (int j = 0; j < valueCount; j++) {
+
+			if (values[j] == tiles[i].value) {
+
+				return false;
+
+			}
+
+		}
+
+		values[valueCount++] = tiles[i].value;
+
+	}
+
+	for (int i = 0; i < valueCount - 1; i++) {
+
+		for (int j = i + 1; j < valueCount; j++) {
+
+			if (values[i] > values[j]) {
+
+				int temp = values[i];
+				values[i] = values[j];
+				values[j] = temp;
+
+			}
+
+		}
+
+	}
+
+	int gaps = 0;
+	for (int i = 0; i < valueCount - 1; i++) {
+
+		gaps += (values[i + 1] - values[i] - 1);
+
+	}
+
+	return gaps <= jokers;
+
+}
+
+bool isValidCombinationTiles(const Tile tiles[], int count) {
+
+	return isValidGroupTiles(tiles, count) || isValidSeriesTiles(tiles, count);
+
+}
+
+bool readSingleSelectionOrDraw(const Player& player, int selectedTiles[], int& count) {
+
+	const int MAX_INPUT = 1024;
+	char input[MAX_INPUT];
+
+	while (true) {
+
+		cout << "Enter tile indexes to add (e.g. 1 3 5): ";
+		cin.getline(input, MAX_INPUT);
+
+		parseSingleTileSelection(player, input, selectedTiles, count);
+
+		int decision = confirmSelectedTilesSingle(player, selectedTiles, count);
+
+		if (decision == 1) {
+
+			return true;
+
+		}
+		if (decision == -1) {
+
+			return false;
+
+		}
+
+		cout << "Let's try again" << endl;
+
+	}
+
+}
+
+int addTilesToTableCombination(Player& player, Table& table) {
+
+	if (table.count == 0) {
+
+		cout << "Table is empty. Nothing to add to." << endl;
+		return 0;
+
+	}
+
+	int tableIndex = chooseTableCombinationIndex(table);
+	if (tableIndex < 0) {
+
+		return 0;
+
+	}
+
+	int selected[DECK_SIZE];
+	int count = 0;
+
+	bool wantsToPlay = readSingleSelectionOrDraw(player, selected, count);
+	if (!wantsToPlay) {
+
+		return -1;
+
+	}
+
+	TableCombination backup = table.combos[tableIndex];
+
+	for (int i = 0; i < count; i++) {
+
+		if (table.combos[tableIndex].count >= DECK_SIZE) {
+
+			cout << "Combination  is too long!" << endl;
+			table.combos[tableIndex] = backup;
+			return 0;
+
+		}
+
+		table.combos[tableIndex].tiles[table.combos[tableIndex].count++] = player.hand[selected[i]];
+
+	}
+
+	if (!isValidCombinationTiles(table.combos[tableIndex].tiles, table.combos[tableIndex].count)) {
+
+		cout << "Resulting table combination is invalid. Reverting..." << endl;
+		table.combos[tableIndex] = backup;
+		return 0;
+
+	}
+
+	removeSelectedTiles(player, selected, count);
+	return 1;
+
+}
+
+void parseSingleTileSelection(const Player& player, const char input[], int selectedTiles[], int& count) {
+
+	count = 0;
+
+	for (int i = 0; input[i] != '\0'; i++) {
+
+		if (isDigit(input[i])) {
+
+			int number = 0;
+			while (isDigit(input[i])) {
+
+				number = number * 10 + (input[i] - '0');
+				i++;
+
+			}
+
+			int index = number - 1;
+			if (index >= 0 && index < player.handCount) {
+
+				bool alreadySelected = false;
+				for (int j = 0; j < count; j++) {
+
+					if (selectedTiles[j] == index) {
+
+						alreadySelected = true;
+						break;
+
+					}
+
+				}
+
+				if (!alreadySelected) {
+
+					selectedTiles[count++] = index;
+
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
+int confirmSelectedTilesSingle(const Player& player, const int selectedTiles[], int count) {
+
+	if (count == 0) {
+
+		cout << "You didn't select any tiles!" << endl;
+		return 0;
+
+	}
+
+	cout << "You selected: ";
+	for (int k = 0; k < count; k++) {
+
+		printTile(player.hand[selectedTiles[k]]);
+		cout << " ";
+
+	}
+	cout << endl;
+
+	char confirm;	
+	while (true) {
+
+		cout << "Are you sure? (y = play, n = reselect, d = draw tile): ";
+		cin >> confirm;
+		cin.ignore(1024, '\n');
+
+		if (confirm == 'y' || confirm == 'Y') {
+
+			return 1;
+
+		}
+		if (confirm == 'n' || confirm == 'N') {
+
+			return 0;
+
+		}
+		if (confirm == 'd' || confirm == 'D') {
+
+			return -1;
+
+		}
+
+		cout << "Invalid input!" << endl;
+		
+	}
 
 }

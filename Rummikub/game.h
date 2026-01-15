@@ -1,6 +1,7 @@
 #pragma once
 #include "player.h"
 #include "deck.h"
+#include "table.h"
 
 const int MIN_PLAYERS = 2;
 const int MAX_PLAYERS = 4;
@@ -17,7 +18,7 @@ int chooseNumberOfPlayers();
 bool initializePlayers(Player players[], int numPlayers);
 int chooseTurnAction();
 bool drawTileForPlayer(Player& player);
-void playTurn(Player& player, int playerIndex);
+void playTurn(Player& player, int playerIndex, Table& table);
 void removeSelectedTiles(Player& player, int selectedTiles[], int count);
 bool isGameOver(Player players[], int numPlayers, int& winnerIndex);
 int calculateHandPoints(const Player& player);
@@ -32,3 +33,12 @@ bool checkInitial30Multiple(Player& player, const Combination combinations[], in
 int confirmSelectedCombinations(const Player& player, const Combination combinations[], int combinationCount);
 void parseMultipleTileSelection(const Player& player, const char input[], Combination combinations[], int& combinationCount);
 void removeMultipleSelectedTiles(Player& player, const Combination combinations[], int combinationCount);
+bool addCombinationsToTable(const Player& player, Table& table, const Combination combinations[], int combinationCount);
+int chooseTableCombinationIndex(const Table& table);
+bool isValidGroupTiles(const Tile tiles[], int count);
+bool isValidSeriesTiles(const Tile tiles[], int count);
+bool isValidCombinationTiles(const Tile tiles[], int count);
+bool readSingleSelectionOrDraw(const Player& player, int selectedTiles[], int& count);
+int addTilesToTableCombination(Player& player, Table& table);
+void parseSingleTileSelection(const Player& player, const char input[], int selectedTiles[], int& count);
+int confirmSelectedTilesSingle(const Player& player, const int selectedTiles[], int count);

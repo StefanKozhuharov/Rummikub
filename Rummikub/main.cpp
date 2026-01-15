@@ -4,13 +4,14 @@
 #include "player.h"
 #include "ui.h"
 #include "game.h"
+#include "table.h"
 
 using namespace std;
 
 int main()
 {
     
-    srand(time(nullptr));
+    srand((unsigned)time(nullptr));
 
     initDeck();
     shuffleDeck();
@@ -25,12 +26,15 @@ int main()
 
     }
 
+    Table table;
+    table.count = 0;
+
     int currentPlayer = 0;
     int winnerIndex = -1;
 
     while (!isGameOver(players, numPlayers, winnerIndex)) {
 
-        playTurn(players[currentPlayer], currentPlayer);
+        playTurn(players[currentPlayer], currentPlayer, table);
 
         currentPlayer++;
 
