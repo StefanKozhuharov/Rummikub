@@ -54,3 +54,5 @@ bool ensureInitial30(const Player& player);
 void printPlayedCombinations(const Player& player, const Combination combos[], int comboCount);
 int buildNewComboFromStolenAndHand(const Player& player, const Tile stolen[], int stolenCount, const int handSelected[], int handCount, Tile out[]);
 bool validateRemainingTableCombo(const TableCombination& modified);
+int readReplacementTileIndex(const Player& player, const bool used[], const char* prompt);
+bool tryPlaceStolenTilesOnTable(Table& table, const Tile stolen[], int stolenCount);

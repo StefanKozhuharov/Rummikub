@@ -166,6 +166,8 @@ bool drawTileForPlayer(Player& player) {
 
 void playTurn(Player& player, int playerIndex, Table& table) {
 
+	//TODO decrease length to under 40 rows
+
 	cout << endl << "--- Player " << playerIndex + 1 << "'s turn ---" << endl;
 
 	bool didSomething = false;
@@ -457,7 +459,7 @@ bool isValidGroup(const Player& player, const int selectedTiles[], int count) {
 }
 
 bool isValidSeries(const Player& player, const int selectedTiles[], int count) {
-
+	//TODO make under 40 lines
 	if (count < 3) {
 
 		return false;
@@ -878,7 +880,7 @@ bool isValidGroupTiles(const Tile tiles[], int count) {
 }
 
 bool isValidSeriesTiles(const Tile tiles[], int count) {
-
+	//TODO make under 40 lines
 	if (count < 3) {
 
 		return false;
@@ -1268,7 +1270,7 @@ bool addTileCombinationToTable(Table& table, const Tile tiles[], int count) {
 }
 
 int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
-
+	//TODO make under 40 lines
 	if (table.count == 0) {
 
 		cout << "Table is empty." << endl;
@@ -1323,14 +1325,77 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 	Tile stolen[DECK_SIZE];
 	int stolenCount = 0;
 
-	int selectedCopy[DECK_SIZE];
+	int replaceHandIndex[DECK_SIZE];
+	int replaceCount = 0;
+
+	bool usedHand[DECK_SIZE] = { false };
+
+	int removePos[DECK_SIZE];
+	int removeCount = 0;
+
 	for (int i = 0; i < posCount; i++) {
 
-		selectedCopy[i] = selectedPos[i];
+		int pos = selectedPos[i];
+
+		if (pos < 0 || pos >= original.count) {
+
+			cout << "Invalid table position!" << endl;
+			return 0;
+
+		}
+
+		Tile picked = original.tiles[pos];
+
+		if (picked.value == JOKER_VALUE) {
+
+			while (true) {
+
+				int handIndex = readReplacementTileIndex(player, usedHand, "Choose a tile from your hand to replace this joker (index): ");
+
+				Tile old = modified.tiles[pos];
+				modified.tiles[pos] = player.hand[handIndex];
+
+				TableCombination test = modified;
+
+				if (isValidCombinationTiles(test.tiles, test.count)) {
+
+					usedHand[handIndex] = true;
+					replaceHandIndex[replaceCount++] = handIndex;
+					stolen[stolenCount++] = picked;
+					break;
+
+				}
+
+				modified.tiles[pos] = old;
+				cout << "That tile does not fit as a replacement. Choose another" << endl;
+
+			}
+
+		}
+		else {
+
+			removePos[removeCount++] = pos;
+			stolen[stolenCount++] = picked;
+
+		}
 
 	}
 
-	removeTilesFromTableCombination(modified, selectedCopy, posCount, stolen, stolenCount);
+	sortDescending(removePos, removeCount);
+
+	for (int i = 0; i < removeCount; i++) {
+
+		int pos = removePos[i];
+
+		for (int j = pos; j < modified.count - 1; j++) {
+
+			modified.tiles[j] = modified.tiles[j + 1];
+
+		}
+
+		modified.count--;
+
+	}
 
 	if (!validateRemainingTableCombo(modified)) {
 
@@ -1339,6 +1404,49 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 	}
 
 	while (true) {
+
+		char mode;
+		while (true) {
+			cout << "Choose what to do with stolen tiles: "
+				<< "(c = create new combination, a = add stolen tiles to table, s = reselect stolen tiles, d = draw tile): ";
+			cin >> mode;
+			cin.ignore(1024, '\n');
+
+			if (mode == 'c' || mode == 'C' || mode == 'a' || mode == 'A' || mode == 's' || mode == 'S' || mode == 'd' || mode == 'D') break;
+			cout << "Invalid input!" << endl;
+		}
+
+		if (mode == 'd' || mode == 'D') return -1;
+
+		if (mode == 's' || mode == 'S') return 0;
+
+		if (mode == 'a' || mode == 'A') {
+
+			Table tableBackup = table;
+			table.combos[tableIndex] = modified;
+
+			if (!tryPlaceStolenTilesOnTable(table, stolen, stolenCount)) {
+				table = tableBackup;
+				cout << "Couldn't place stolen tiles on table. Choose another option." << endl;
+				continue;
+			}
+
+			bool mark[DECK_SIZE] = { false };
+			int unique[DECK_SIZE];
+			int u = 0;
+
+			for (int i = 0; i < replaceCount; i++) {
+				int idx = replaceHandIndex[i];
+				if (idx >= 0 && idx < player.handCount && !mark[idx]) {
+					mark[idx] = true;
+					unique[u++] = idx;
+				}
+			}
+
+			removeSelectedTiles(player, unique, u);
+			cout << "Steal successful (tiles placed on table)." << endl;
+			return 1;
+		}
 
 		int handSelected[DECK_SIZE];
 		int handCount = 0;
@@ -1350,55 +1458,77 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 
 		}
 
+		int filtered[DECK_SIZE];
+		int filteredCount = 0;
+
+		for (int i = 0; i < handCount; i++) {
+
+			int index = handSelected[i];
+
+			if (index >= 0 && index < player.handCount && !usedHand[index]) {
+
+				filtered[filteredCount++] = index;
+
+			}
+
+		}
+
+		for (int i = 0; i < filteredCount; i++) {
+
+			handSelected[i] = filtered[i];
+
+		}
+
+		handCount = filteredCount;
+
+		if (handCount == 0) {
+			cout << "All selected tiles are already used as joker replacements. Select again." << endl;
+			continue;
+		}
+
 		Tile newComboTiles[DECK_SIZE];
 		int newCount = buildNewComboFromStolenAndHand(player, stolen, stolenCount, handSelected, handCount, newComboTiles);
 
 		if (isValidCombinationTiles(newComboTiles, newCount)) {
 
-			table.combos[tableIndex] = modified;
-			removeSelectedTiles(player, handSelected, handCount);
+			int allToRemove[DECK_SIZE];
+			int allCount = 0;
 
-			if (!addTileCombinationToTable(table, newComboTiles, newCount)) {
+			for (int i = 0; i < replaceCount; i++) {
 
-				cout << "Failed to add new combination to table (table full)." << endl;
-				//TODO rollback (isn't neccesary the table shouldn't be full realisticly)
-				return 0;
+				allToRemove[allCount++] = replaceHandIndex[i];
+
+			}
+			for (int i = 0; i < handCount; i++) {
+
+				allToRemove[allCount++] = handSelected[i];
 
 			}
 
+			if (!addTileCombinationToTable(table, newComboTiles, newCount)) {
+				cout << "Failed to add new combination to table (table full)." << endl;
+				return 0;
+			}
+
+			bool mark[DECK_SIZE] = { false };
+			int unique[DECK_SIZE];
+			int u = 0;
+
+			for (int i = 0; i < allCount; i++) {
+				int idx = allToRemove[i];
+				if (idx >= 0 && idx < player.handCount && !mark[idx]) {
+					mark[idx] = true;
+					unique[u++] = idx;
+				}
+			}
+
+			table.combos[tableIndex] = modified;
+			removeSelectedTiles(player, unique, u);
 			cout << "Steal successful!" << endl;
 			return 1;
-
 		}
 
 		cout << "New combination is invalid." << endl;
-
-		char option;
-		while (true) {
-
-			cout << "Do you want to try again? (r = reselect hand tiles, s = reselect stolen tiles, d = draw tile): ";
-			cin >> option;
-			cin.ignore(1024, '\n');
-
-			if (option == 'r' || option == 'R') {
-
-				break;
-
-			}
-			if (option == 's' || option == 'S') {
-
-				return 0;
-
-			}
-			if (option == 'd' || option == 'D') {
-
-				return -1;
-
-			}
-
-			cout << "Invalid input!" << endl;
-
-		}
 
 	}
 
@@ -1466,6 +1596,106 @@ bool validateRemainingTableCombo(const TableCombination& modified) {
 
 		cout << "You can't steal like that (remaining would be invalid)." << endl;
 		return false;
+
+	}
+
+	return true;
+
+}
+
+int readReplacementTileIndex(const Player& player, const bool used[], const char* prompt) {
+
+	while (true) {
+
+		printHand(player);
+		cout << prompt;
+		int choice;
+		cin >> choice;
+		cin.ignore(1024, '\n');
+
+		int index = choice - 1;
+
+		if (index < 0 || index >= player.handCount) {
+
+			cout << "Invalid index!" << endl;
+			continue;
+
+		}
+
+		if (used[index]) {
+
+			cout << "You already used this tile!" << endl;
+			continue;
+
+		}
+
+		if (player.hand[index].value == JOKER_VALUE) {
+
+			cout << "You cannot replace a joker with another joker." << endl;
+			continue;
+
+		}
+
+		return index;
+
+	}
+
+}
+
+bool tryPlaceStolenTilesOnTable(Table& table, const Tile stolen[], int stolenCount) {
+
+	if (stolenCount == 0) {
+
+		return true;
+
+	}
+	if (table.count == 0) {
+
+		return false;
+
+	}
+	
+	for (int s = 0; s < stolenCount; s++) {
+
+		Tile tile = stolen[s];
+
+		while (true) {
+
+			cout << "You must place stolen tile: ";
+			printTile(tile);
+			cout << endl;
+
+			printTable(table);
+
+			int targetIndex = chooseTableCombinationIndex(table);
+			if (targetIndex < 0) {
+
+				return false;
+
+			}
+
+			TableCombination backup = table.combos[targetIndex];
+
+			if (table.combos[targetIndex].count >= DECK_SIZE) {
+
+				cout << "That combination is too long. Choose another." << endl;
+				continue;
+
+			}
+
+			table.combos[targetIndex].tiles[table.combos[targetIndex].count++] = tile;
+
+			if (isValidCombinationTiles(table.combos[targetIndex].tiles, table.combos[targetIndex].count)) {
+
+				cout << "Placed successfully" << endl;
+				break;
+
+			}
+
+			table.combos[targetIndex] = backup;
+			cout << "Can't place it there (combination becomes invalid). Choose another." << endl;
+
+		}
 
 	}
 

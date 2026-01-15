@@ -55,7 +55,7 @@ int main()
         cout << "Player " << i + 1 << ": " << calculateHandPoints(players[i]) << " points" << endl;
 
     }
-
+    //TODO play test stealing
     return 0;
 
 }
