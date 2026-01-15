@@ -16,7 +16,7 @@ struct Combination {
 bool isDigit(char symbol);
 int chooseNumberOfPlayers();
 bool initializePlayers(Player players[], int numPlayers);
-int chooseTurnAction();
+int chooseTurnAction(bool didSomething);
 bool drawTileForPlayer(Player& player);
 void playTurn(Player& player, int playerIndex, Table& table);
 void removeSelectedTiles(Player& player, int selectedTiles[], int count);

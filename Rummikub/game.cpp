@@ -46,19 +46,52 @@ bool initializePlayers(Player players[], int numPlayers) {
 
 }
 
-int chooseTurnAction() {
+int chooseTurnAction(bool didSomething) {
 
 	int choice = 0;
 
-	while (choice < 1 || choice > 3) {
+	while (true) {
 
-		cout << "Choose Action" << endl << "1 - Play tiles" << endl << "2 - Draw a tile" << endl << "3 - Add tile(s) to existing table combination" << endl << "Your choice: ";
+		cout << "Choose Action" << endl << "1 - Play new combinations" << endl << "2 - Add tile(s) to existing table combination" << endl;
+
+		if (!didSomething) {
+
+			cout << "3 - Draw a tile (ends turn)" << endl;
+
+		}
+		else {
+
+			cout << "3 - Draw a tile (ends turn)" << endl << "4 - End turn" << endl;
+
+		}
+
 		cin >> choice;
 		cin.ignore(1024, '\n');
 
-	}
+		if (!didSomething) {
 
-	return choice;
+			if (choice >= 1 && choice <= 3) {
+
+				return choice;
+
+			}
+
+			cout << "Invalid choice!" << endl;
+
+		}
+		else {
+
+			if (choice >= 1 && choice <= 4) {
+
+				return choice;
+
+			}
+
+			cout << "Invalid choice!" << endl;
+
+		}
+
+	}
 
 }
 
@@ -92,28 +125,36 @@ void playTurn(Player& player, int playerIndex, Table& table) {
 
 	cout << endl << "--- Player " << playerIndex + 1 << "'s turn ---" << endl;
 
+	bool didSomething = false;
+
 	while (true) {
 
 		printTable(table);
 		printHand(player);
 
-		int action = chooseTurnAction();
+		int action = chooseTurnAction(didSomething);
 
-		if (action == 2) {
+		if (action == 3) {
 
 			drawTileForPlayer(player);
 			return;
 
 		}
 
-		if (action == 3 && !player.hasInitial30) {
+		if (action == 4) {
 
-			cout << "You must first place initial 30 points using only your hand." << endl;
-			continue;
+			return;
 
 		}
 
-		if (action == 3) {
+		if (action == 2) {
+
+			if (!player.hasInitial30) {
+
+				cout << "You must first place initial 30 points using only your hand." << endl;
+				continue;
+
+			}
 
 			int decision = addTilesToTableCombination(player, table);
 			if (decision == -1) {
@@ -125,7 +166,8 @@ void playTurn(Player& player, int playerIndex, Table& table) {
 
 			if (decision == 1) {
 
-				return;
+				didSomething = true;
+				continue;
 
 			}
 
@@ -185,7 +227,9 @@ void playTurn(Player& player, int playerIndex, Table& table) {
 		}
 
 		removeMultipleSelectedTiles(player, combinations, combinationCount);
-		return;
+
+		didSomething = true;
+		continue;
 
 	}
 
