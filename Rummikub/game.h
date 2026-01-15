@@ -42,3 +42,15 @@ bool readSingleSelectionOrDraw(const Player& player, int selectedTiles[], int& c
 int addTilesToTableCombination(Player& player, Table& table);
 void parseSingleTileSelection(const Player& player, const char input[], int selectedTiles[], int& count);
 int confirmSelectedTilesSingle(const Player& player, const int selectedTiles[], int count);
+void sortDescending(int arr[], int n);
+void parseTableTilePositions(const char input[], int selectedPos[], int& count, int comboCount);
+int confirmStealSelection(const TableCombination combo, const int selectedPos[], int count);
+void removeTilesFromTableCombination(TableCombination& combo, int selectedPos[], int count, Tile stolen[], int& stolenCount);
+bool addTileCombinationToTable(Table& table, const Tile tiles[], int count);
+int stealFromTableAndCreateNewCombination(Player& player, Table& table);
+int readNumber(const char input[], int& i);
+void printTableCombinationWithPositions(const TableCombination& combo);
+bool ensureInitial30(const Player& player);
+void printPlayedCombinations(const Player& player, const Combination combos[], int comboCount);
+int buildNewComboFromStolenAndHand(const Player& player, const Tile stolen[], int stolenCount, const int handSelected[], int handCount, Tile out[]);
+bool validateRemainingTableCombo(const TableCombination& modified);

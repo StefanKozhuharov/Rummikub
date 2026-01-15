@@ -10,6 +10,54 @@ bool isDigit(char symbol) {
 
 }
 
+void sortDescending(int arr[], int n) {
+
+	for (int i = 0; i < n - 1; i++) {
+
+		for (int j = i + 1; j < n; j++) {
+
+			if (arr[i] < arr[j]) {
+
+				int temp = arr[i];
+				arr[i] = arr[j];
+				arr[j] = temp;
+
+			}
+
+		}
+
+	}
+
+}
+
+int readNumber(const char input[], int& i) {
+
+	int number = 0;
+	while (isDigit(input[i])) {
+
+		number = number * 10 + (input[i] - '0');
+		i++;
+
+	}
+
+	return number;
+
+}
+
+void printTableCombinationWithPositions(const TableCombination& combo) {
+
+	for (int i = 0; i < combo.count; i++) {
+
+		cout << "[" << i + 1 << "]";
+		printTile(combo.tiles[i]);
+		cout << " ";
+
+	}
+
+	cout << endl;
+
+}
+
 int chooseNumberOfPlayers() {
 
 	int numPlayers = 0;
@@ -52,16 +100,11 @@ int chooseTurnAction(bool didSomething) {
 
 	while (true) {
 
-		cout << "Choose Action" << endl << "1 - Play new combinations" << endl << "2 - Add tile(s) to existing table combination" << endl;
+		cout << "Choose Action" << endl << "1 - Play new combinations" << endl << "2 - Add tile(s) to existing table combination" << endl << "3 - Draw a tile (ends turn)" << endl << "4 - Steal tile(s) from the table (you need to use it on the same turn)" << endl;
 
-		if (!didSomething) {
+		if (didSomething) {
 
-			cout << "3 - Draw a tile (ends turn)" << endl;
-
-		}
-		else {
-
-			cout << "3 - Draw a tile (ends turn)" << endl << "4 - End turn" << endl;
+			cout << "5 - End turn" << endl;
 
 		}
 
@@ -70,7 +113,7 @@ int chooseTurnAction(bool didSomething) {
 
 		if (!didSomething) {
 
-			if (choice >= 1 && choice <= 3) {
+			if (choice >= 1 && choice <= 4) {
 
 				return choice;
 
@@ -81,7 +124,7 @@ int chooseTurnAction(bool didSomething) {
 		}
 		else {
 
-			if (choice >= 1 && choice <= 4) {
+			if (choice >= 1 && choice <= 5) {
 
 				return choice;
 
@@ -143,15 +186,41 @@ void playTurn(Player& player, int playerIndex, Table& table) {
 
 		if (action == 4) {
 
+			if (!ensureInitial30(player)) {
+
+				continue;
+
+			}
+
+			int result = stealFromTableAndCreateNewCombination(player, table);
+			if (result == -1) {
+
+				drawTileForPlayer(player);
+				return;
+
+			}
+			if (result == 1) {
+
+				didSomething = true;
+				continue;
+
+			}
+
+			cout << "Steal failed. Try again." << endl;
+			continue;
+
+		}
+
+		if (action == 5) {
+
 			return;
 
 		}
 
 		if (action == 2) {
 
-			if (!player.hasInitial30) {
+			if (!ensureInitial30(player)) {
 
-				cout << "You must first place initial 30 points using only your hand." << endl;
 				continue;
 
 			}
@@ -202,20 +271,7 @@ void playTurn(Player& player, int playerIndex, Table& table) {
 
 		}
 
-		cout << "Player " << playerIndex + 1 << " played:" << endl;
-		for (int c = 0; c < combinationCount; c++) {
-
-			cout << "Combination " << c + 1 << ": ";
-			for (int t = 0; t < combinations[c].count; t++) {
-
-				printTile(player.hand[combinations[c].tiles[t]]);
-				cout << " ";
-
-			}
-
-			cout << endl;
-
-		}
+		printPlayedCombinations(player, combinations, combinationCount);
 
 		cout << endl;
 
@@ -237,21 +293,7 @@ void playTurn(Player& player, int playerIndex, Table& table) {
 
 void removeSelectedTiles(Player& player, int selectedTiles[], int count) {
 
-	for (int i = 0; i < count - 1; i++) {
-
-		for (int j = i + 1; j < count; j++) {
-
-			if (selectedTiles[i] < selectedTiles[j]) {
-
-				int temp = selectedTiles[i];
-				selectedTiles[i] = selectedTiles[j];
-				selectedTiles[j] = temp;
-
-			}
-
-		}
-
-	}
+	sortDescending(selectedTiles, count);
 
 	for (int i = 0; i < count; i++) {
 
@@ -649,15 +691,7 @@ void parseMultipleTileSelection(const Player& player, const char input[], Combin
 
 			if (isDigit(input[i])) {
 
-				int number = 0;
-
-				while (isDigit(input[i])) {
-
-					number = number * 10 + (input[i] - '0');
-					i++;
-
-				}
-
+				int number = readNumber(input, i);
 				int index = number - 1;
 
 				if (index >= 0 && index < player.handCount) {
@@ -1019,15 +1053,9 @@ void parseSingleTileSelection(const Player& player, const char input[], int sele
 
 		if (isDigit(input[i])) {
 
-			int number = 0;
-			while (isDigit(input[i])) {
-
-				number = number * 10 + (input[i] - '0');
-				i++;
-
-			}
-
+			int number = readNumber(input, i);
 			int index = number - 1;
+
 			if (index >= 0 && index < player.handCount) {
 
 				bool alreadySelected = false;
@@ -1049,6 +1077,8 @@ void parseSingleTileSelection(const Player& player, const char input[], int sele
 				}
 
 			}
+
+			i--;
 
 		}
 
@@ -1100,5 +1130,345 @@ int confirmSelectedTilesSingle(const Player& player, const int selectedTiles[], 
 		cout << "Invalid input!" << endl;
 		
 	}
+
+}
+
+void parseTableTilePositions(const char input[], int selectedPos[], int& count, int comboCount) {
+
+	count = 0;
+
+	for (int i = 0; input[i] != '\0'; i++) {
+
+		if (isDigit(input[i])) {
+
+			int number = readNumber(input, i);
+			int pos = number - 1;
+
+			if (pos >= 0 && pos < comboCount) {
+
+				bool alreadySelected = false;
+
+				for (int j = 0; j < count; j++) {
+
+					if (selectedPos[j] == pos) {
+
+						alreadySelected = true;
+						break;
+
+					}
+
+				}
+
+				if (!alreadySelected) {
+
+					selectedPos[count++] = pos;
+
+				}
+
+			}
+
+			i--;
+
+		}
+
+	}
+
+}
+
+int confirmStealSelection(const TableCombination combo, const int selectedPos[], int count) {
+
+	if (count == 0) {
+
+		cout << "You didn't select any tiles to steal!" << endl;
+		return 0;
+
+	}
+
+	cout << "You will steal: ";
+	for (int i = 0; i < count; i++) {
+
+		printTile(combo.tiles[selectedPos[i]]);
+		cout << " ";
+
+	}
+	cout << endl;
+
+	char confirm;
+	while (true) {
+
+		cout << "Are you sure? (y = steal, n = reselect, d = draw tile): ";
+		cin >> confirm;
+		cin.ignore(1024, '\n');
+
+		if (confirm == 'y' || confirm == 'Y') {
+
+			return 1;
+
+		}
+		if (confirm == 'n' || confirm == 'N') {
+
+			return 0;
+
+		}
+		if (confirm == 'd' || confirm == 'D') {
+
+			return -1;
+
+		}
+
+		cout << "Invalid input!" << endl;
+
+	}
+
+}
+
+void removeTilesFromTableCombination(TableCombination& combo, int selectedPos[], int count, Tile stolen[], int& stolenCount) {
+
+	stolenCount = 0;
+	sortDescending(selectedPos, count);
+
+	for (int i = 0; i < count; i++) {
+
+		int pos = selectedPos[i];
+
+		stolen[stolenCount++] = combo.tiles[pos];
+
+		for (int j = pos; j < combo.count - 1; j++) {
+
+			combo.tiles[j] = combo.tiles[j + 1];
+
+		}
+		combo.count--;
+
+	}
+
+}
+
+bool addTileCombinationToTable(Table& table, const Tile tiles[], int count) {
+
+	if (table.count >= MAX_TABLE_COMBINATIONS) {
+
+		cout << "Table is full!" << endl;
+		return false;
+
+	}
+
+	TableCombination newCombo;
+	newCombo.count = count;
+
+	for (int i = 0; i < count; i++) {
+
+		newCombo.tiles[i] = tiles[i];
+
+	}
+
+	table.combos[table.count++] = newCombo;
+	return true;
+
+}
+
+int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
+
+	if (table.count == 0) {
+
+		cout << "Table is empty." << endl;
+		return 0;
+
+	}
+
+	int tableIndex = chooseTableCombinationIndex(table);
+	if (tableIndex < 0) {
+
+		return 0;
+
+	}
+
+	TableCombination original = table.combos[tableIndex];
+
+	const int MAX_INPUT = 1024;
+	char input[MAX_INPUT];
+
+	int selectedPos[DECK_SIZE];
+	int posCount = 0;
+
+	while (true) {
+
+		cout << "Selected table combination: ";
+		printTableCombinationWithPositions(original);
+		cout << endl;
+
+		cout << "Enter positions to steal (e.g. 1 3): ";
+		cin.getline(input, MAX_INPUT);
+
+		parseTableTilePositions(input, selectedPos, posCount, original.count);
+
+		int decision = confirmStealSelection(original, selectedPos, posCount);
+		if (decision == -1) {
+
+			return -1;
+
+		}
+		if (decision == 1) {
+
+			break;
+
+		}
+
+		posCount = 0;
+
+	}
+
+	TableCombination modified = original;
+
+	Tile stolen[DECK_SIZE];
+	int stolenCount = 0;
+
+	int selectedCopy[DECK_SIZE];
+	for (int i = 0; i < posCount; i++) {
+
+		selectedCopy[i] = selectedPos[i];
+
+	}
+
+	removeTilesFromTableCombination(modified, selectedCopy, posCount, stolen, stolenCount);
+
+	if (!validateRemainingTableCombo(modified)) {
+
+		return 0;
+
+	}
+
+	while (true) {
+
+		int handSelected[DECK_SIZE];
+		int handCount = 0;
+
+		bool wantsToPlay = readSingleSelectionOrDraw(player, handSelected, handCount);
+		if (!wantsToPlay) {
+
+			return -1;
+
+		}
+
+		Tile newComboTiles[DECK_SIZE];
+		int newCount = buildNewComboFromStolenAndHand(player, stolen, stolenCount, handSelected, handCount, newComboTiles);
+
+		if (isValidCombinationTiles(newComboTiles, newCount)) {
+
+			table.combos[tableIndex] = modified;
+			removeSelectedTiles(player, handSelected, handCount);
+
+			if (!addTileCombinationToTable(table, newComboTiles, newCount)) {
+
+				cout << "Failed to add new combination to table (table full)." << endl;
+				//TODO rollback (isn't neccesary the table shouldn't be full realisticly)
+				return 0;
+
+			}
+
+			cout << "Steal successful!" << endl;
+			return 1;
+
+		}
+
+		cout << "New combination is invalid." << endl;
+
+		char option;
+		while (true) {
+
+			cout << "Do you want to try again? (r = reselect hand tiles, s = reselect stolen tiles, d = draw tile): ";
+			cin >> option;
+			cin.ignore(1024, '\n');
+
+			if (option == 'r' || option == 'R') {
+
+				break;
+
+			}
+			if (option == 's' || option == 'S') {
+
+				return 0;
+
+			}
+			if (option == 'd' || option == 'D') {
+
+				return -1;
+
+			}
+
+			cout << "Invalid input!" << endl;
+
+		}
+
+	}
+
+}
+
+bool ensureInitial30(const Player& player) {
+
+	if (!player.hasInitial30) {
+
+		cout << "You must first place initial 30 points using only your hand." << endl;
+		return false;
+
+	}
+
+	return true;
+
+}
+
+void printPlayedCombinations(const Player& player, const Combination combos[], int comboCount) {
+
+	cout << "Played: " << endl;
+	for (int c = 0; c < comboCount; c++) {
+
+		cout << "Combination " << c + 1 << ": ";
+		for (int t = 0; t < combos[c].count; t++) {
+
+			printTile(player.hand[combos[c].tiles[t]]);
+			cout << " ";
+
+		}
+
+		cout << endl;
+
+	}
+
+}
+
+int buildNewComboFromStolenAndHand(const Player& player, const Tile stolen[], int stolenCount, const int handSelected[], int handCount, Tile out[]) {
+
+	int n = 0;
+	for (int i = 0; i < stolenCount; i++) {
+
+		out[n++] = stolen[i];
+
+	}
+	for (int i = 0; i < handCount; i++) {
+
+		out[n++] = player.hand[handSelected[i]];
+
+	}
+
+	return n;
+
+}
+
+bool validateRemainingTableCombo(const TableCombination& modified) {
+
+	if (modified.count < 3) {
+
+		cout << "You can't steal like that (remaining would be too short)." << endl;
+		return false;
+
+	}
+	if (!isValidCombinationTiles(modified.tiles, modified.count)) {
+
+		cout << "You can't steal like that (remaining would be invalid)." << endl;
+		return false;
+
+	}
+
+	return true;
 
 }
