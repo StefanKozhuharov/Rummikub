@@ -56,3 +56,4 @@ int buildNewComboFromStolenAndHand(const Player& player, const Tile stolen[], in
 bool validateRemainingTableCombo(const TableCombination& modified);
 int readReplacementTileIndex(const Player& player, const bool used[], const char* prompt);
 bool tryPlaceStolenTilesOnTable(Table& table, const Tile stolen[], int stolenCount);
+bool hasAnyValidJokerReplacement(const Player& player, const TableCombination& modified, int jokerPos, const bool usedHand[]);

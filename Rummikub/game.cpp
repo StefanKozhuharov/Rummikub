@@ -1348,6 +1348,13 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 
 		if (picked.value == JOKER_VALUE) {
 
+			if (!hasAnyValidJokerReplacement(player, modified, pos, usedHand)) {
+
+				cout << "You cannot steal this joker. you have no valid tile to replace it with." << endl;
+				return 0;
+
+			}
+
 			while (true) {
 
 				int handIndex = readReplacementTileIndex(player, usedHand, "Choose a tile from your hand to replace this joker (index): ");
@@ -1700,5 +1707,36 @@ bool tryPlaceStolenTilesOnTable(Table& table, const Tile stolen[], int stolenCou
 	}
 
 	return true;
+
+}
+
+bool hasAnyValidJokerReplacement(const Player& player, const TableCombination& modified, int jokerPos, const bool usedHand[]) {
+
+	for (int i = 0; i < player.handCount; i++) {
+
+		if (usedHand[i]) {
+
+			continue;
+
+		}
+
+		if (player.hand[i].value == JOKER_VALUE) {
+
+			continue;
+
+		}
+
+		TableCombination test = modified;
+		test.tiles[jokerPos] = player.hand[i];
+
+		if (isValidCombinationTiles(test.tiles, test.count)) {
+
+			return true;
+
+		}
+
+	}
+
+	return false;
 
 }
