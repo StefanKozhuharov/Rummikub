@@ -13,6 +13,15 @@ struct Combination {
 
 };
 
+enum TurnResult {
+
+	TURN_CONTINUE,
+	TURN_DID_SOMETHING,
+	TURN_END,
+	TURN_DRAW_END
+
+};
+
 bool isDigit(char symbol);
 int chooseNumberOfPlayers();
 bool initializePlayers(Player players[], int numPlayers);
@@ -57,3 +66,15 @@ bool validateRemainingTableCombo(const TableCombination& modified);
 int readReplacementTileIndex(const Player& player, const bool used[], const char* prompt);
 bool tryPlaceStolenTilesOnTable(Table& table, const Tile stolen[], int stolenCount);
 bool hasAnyValidJokerReplacement(const Player& player, const TableCombination& modified, int jokerPos, const bool usedHand[]);
+static void sortAsc(int arr[], int n);
+static bool buildSeriesData(const Tile tiles[], int count, int values[], int& valueCount, int& jokers, Colour& colour);
+static bool isValidSeriesCore(const Tile tiles[], int count);
+static TurnResult handleAddToTable(Player& player, Table& table);
+static TurnResult handleSteal(Player& player, Table& table);
+static TurnResult handlePlayNewCombinations(Player& player, Table& table);
+static int readStealPositionsUI(const TableCombination& original, int selectedPos[], int& posCount);
+static int applyStealToCombination(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[]);
+static char chooseStealMode();
+static void removeUniqueHandIndexes(Player& player, const int index[], int n);
+static int handleModeAddToTable(Player& player, Table& table, int tableIndex, const TableCombination& modified, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount);
+static int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]);
