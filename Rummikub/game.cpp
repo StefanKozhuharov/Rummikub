@@ -44,16 +44,19 @@ int readNumber(const char input[], int& i) {
 
 }
 
-static void sortAsc(int arr[], int n) {
+void sortAsc(int arr[], int n) {
 
 	for (int i = 0; i < n - 1; i++) {
 
 		for (int j = i + 1; j < n; j++) {
 
-			int temp = arr[i];
-			arr[i] = arr[j];
-			arr[j] = temp;
+			if (arr[i] > arr[j]) {
 
+				int temp = arr[i];
+				arr[i] = arr[j];
+				arr[j] = temp;
+
+			}
 		}
 
 	}
@@ -1363,7 +1366,7 @@ bool hasAnyValidJokerReplacement(const Player& player, const TableCombination& m
 
 }
 
-static bool buildSeriesData(const Tile tiles[], int count, int values[], int& valueCount, int& jokers, Colour& colour) {
+bool buildSeriesData(const Tile tiles[], int count, int values[], int& valueCount, int& jokers, Colour& colour) {
 
 	valueCount = 0;
 	jokers = 0;
@@ -1408,7 +1411,7 @@ static bool buildSeriesData(const Tile tiles[], int count, int values[], int& va
 
 }
 
-static bool isValidSeriesCore(const Tile tiles[], int count) {
+bool isValidSeriesCore(const Tile tiles[], int count) {
 
 	if (count < 3) {
 
@@ -1439,7 +1442,7 @@ static bool isValidSeriesCore(const Tile tiles[], int count) {
 
 }
 
-static TurnResult handleAddToTable(Player& player, Table& table) {
+TurnResult handleAddToTable(Player& player, Table& table) {
 
 	if (!ensureInitial30(player)) {
 
@@ -1465,7 +1468,7 @@ static TurnResult handleAddToTable(Player& player, Table& table) {
 
 }
 
-static TurnResult handleSteal(Player& player, Table& table) {
+TurnResult handleSteal(Player& player, Table& table) {
 
 	if (!ensureInitial30(player)) {
 
@@ -1491,7 +1494,7 @@ static TurnResult handleSteal(Player& player, Table& table) {
 
 }
 
-static TurnResult handlePlayNewCombinations(Player& player, Table& table) {
+TurnResult handlePlayNewCombinations(Player& player, Table& table) {
 
 	Combination combinations[DECK_SIZE];
 	int combinationCount = 0;
@@ -1530,7 +1533,7 @@ static TurnResult handlePlayNewCombinations(Player& player, Table& table) {
 
 }
 
-static int readStealPositionsUI(const TableCombination& original, int selectedPos[], int& posCount) {
+int readStealPositionsUI(const TableCombination& original, int selectedPos[], int& posCount) {
 
 	const int MAX_INPUT = 1024;
 	char input[MAX_INPUT];
@@ -1566,7 +1569,7 @@ static int readStealPositionsUI(const TableCombination& original, int selectedPo
 
 }
 
-static int applyStealToCombination(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[]) {
+int applyStealToCombination(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[]) {
 
 	modified = original;
 
@@ -1652,7 +1655,7 @@ static int applyStealToCombination(Player& player, const TableCombination& origi
 
 }
 
-static char chooseStealMode() {
+char chooseStealMode() {
 
 	char mode;
 
@@ -1674,7 +1677,7 @@ static char chooseStealMode() {
 
 }
 
-static void removeUniqueHandIndexes(Player& player, const int index[], int n) {
+void removeUniqueHandIndexes(Player& player, const int index[], int n) {
 
 	bool mark[DECK_SIZE] = { false };
 	int unique[DECK_SIZE];
@@ -1683,7 +1686,7 @@ static void removeUniqueHandIndexes(Player& player, const int index[], int n) {
 	for (int i = 0; i < n; i++) {
 
 		int x = index[i];
-		if (x >= 0 && player.handCount && !mark[x]) {
+		if (x >= 0 && x < player.handCount && !mark[x]) {
 
 			mark[x] = true;
 			unique[u++] = x;
@@ -1696,7 +1699,7 @@ static void removeUniqueHandIndexes(Player& player, const int index[], int n) {
 
 }
 
-static int handleModeAddToTable(Player& player, Table& table, int tableIndex, const TableCombination& modified, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount) {
+int handleModeAddToTable(Player& player, Table& table, int tableIndex, const TableCombination& modified, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount) {
 
 	Table backup = table;
 	table.combos[tableIndex] = modified;
@@ -1716,7 +1719,7 @@ static int handleModeAddToTable(Player& player, Table& table, int tableIndex, co
 
 }
 
-static int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]) {
+int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]) {
 
 	int handSelected[DECK_SIZE];
 	int handCount = 0;
