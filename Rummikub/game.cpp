@@ -1123,8 +1123,11 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 	int replaceHandIndex[DECK_SIZE];
 	int replaceCount = 0;
 	bool usedHand[DECK_SIZE] = { false };
+	bool didSplit = false;
+	TableCombination splitSecond;
+	splitSecond.count = 0;
 
-	if (!applyStealToCombination(player, original, selectedPos, posCount, modified, stolen, stolenCount, replaceHandIndex, replaceCount, usedHand)) {
+	if (!applyStealToCombination(player, original, selectedPos, posCount, modified, stolen, stolenCount, replaceHandIndex, replaceCount, usedHand, didSplit, splitSecond)) {
 
 		return 0;
 
@@ -1145,7 +1148,7 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 		}
 		if (mode == 'a' || mode == 'A') {
 
-			int r = handleModeAddToTable(player, table, tableIndex, modified, stolen, stolenCount, replaceHandIndex, replaceCount);
+			int r = handleModeAddToTable(player, table, tableIndex, modified, didSplit, splitSecond, stolen, stolenCount, replaceHandIndex, replaceCount);
 			if (r != 0) {
 
 				return r;
@@ -1155,7 +1158,7 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 
 		}
 
-		int r = handleModeCreateNewCombo(player, table, tableIndex, modified, stolen, stolenCount, replaceHandIndex, replaceCount, usedHand);
+		int r = handleModeCreateNewCombo(player, table, tableIndex, modified, didSplit, splitSecond, stolen, stolenCount, replaceHandIndex, replaceCount, usedHand);
 		if (r != 0) {
 
 			return r; 
@@ -1569,12 +1572,15 @@ int readStealPositionsUI(const TableCombination& original, int selectedPos[], in
 
 }
 
-int applyStealToCombination(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[]) {
+int applyStealToCombination(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[], bool& didSplit, TableCombination& splitSecond) {
 
 	modified = original;
 
 	stolenCount = 0;
 	replaceCount = 0;
+
+	didSplit = false;
+	splitSecond.count = 0;
 
 	int removePos[DECK_SIZE];
 	int removeCount = 0;
@@ -1645,13 +1651,24 @@ int applyStealToCombination(Player& player, const TableCombination& original, co
 
 	}
 
-	if (!validateRemainingTableCombo(modified)) {
+	if (validateRemainingTableCombo(modified)) {
 
-		return 0;
+		return 1;
+
+	}
+	
+	TableCombination a, b;
+	if (trySplitRemainingCombo(modified, a, b)) {
+
+		modified = a;
+		splitSecond = b;
+		didSplit = true;
+
+		return 1;
 
 	}
 
-	return 1;
+	return 0;
 
 }
 
@@ -1699,16 +1716,37 @@ void removeUniqueHandIndexes(Player& player, const int index[], int n) {
 
 }
 
-int handleModeAddToTable(Player& player, Table& table, int tableIndex, const TableCombination& modified, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount) {
+int handleModeAddToTable(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount) {
 
 	Table backup = table;
 	table.combos[tableIndex] = modified;
+
+	if (didSplit) {
+
+		if (table.count + 1 > MAX_TABLE_COMBINATIONS) {
+
+			table = backup;
+			cout << "Table is full - cannot split remaning combination." << endl;
+			return 0;
+
+		}
+
+		table.combos[table.count++] = splitSecond;
+
+	}
 
 	if (!tryPlaceStolenTilesOnTable(table, stolen, stolenCount)) {
 
 		table = backup;
 		cout << "Couldn't place stolen tiles on table. Choose another option." << endl;
 		return 0;
+
+	}
+
+	if (didSplit) {
+
+		cout << "Remaining combination was split into two combinations." << endl;
+
 
 	}
 
@@ -1719,7 +1757,7 @@ int handleModeAddToTable(Player& player, Table& table, int tableIndex, const Tab
 
 }
 
-int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]) {
+int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]) {
 
 	int handSelected[DECK_SIZE];
 	int handCount = 0;
@@ -1785,17 +1823,206 @@ int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const
 
 	}
 
+	Table backup = table;
+
+	table.combos[tableIndex] = modified;
+
+	int needed = didSplit ? 2 : 1;
+		
+	if (table.count + needed > MAX_TABLE_COMBINATIONS) {
+
+		table = backup;
+		cout << "Table is full - cannot split remaining combination." << endl;
+		return 0;
+
+	}
+
+	if (didSplit) {
+
+		table.combos[table.count++] = splitSecond;
+
+	}
+
 	if (!addTileCombinationToTable(table, newComboTiles, newCount)) {
 
+		table = backup;
 		cout << "Failed to add new combination to table (table full)." << endl;
 		return 0;
 
 	}
 
-	table.combos[tableIndex] = modified;
+	if (didSplit) {
+
+		cout << "Remaining combination was split into two combinations." << endl;
+
+	}
 	removeUniqueHandIndexes(player, allToRemove, allCount);
 
 	cout << "Steal successful!" << endl;
 	return 1;
+
+}
+
+bool trySplitSeriesIntoTwoValid(const TableCombination& in, TableCombination& outA, TableCombination& outB) {
+
+	if (in.count < 6) {
+
+		return false;
+
+	}
+
+	Tile nonJokers[DECK_SIZE];
+	int nonCount = 0;
+
+	Tile jokers[DECK_SIZE];
+	int jokerCount = 0;
+
+	Colour colour = ORANGE;
+	bool colourSet = false;
+
+	int values[DECK_SIZE];
+	int valueCount = 0;
+
+	for (int i = 0; i < in.count; i++) {
+
+		Tile t = in.tiles[i];
+
+		if (t.value == JOKER_VALUE) {
+
+			jokers[jokerCount++] = t;
+			continue;
+
+		}
+
+		if (!colourSet) {
+
+			colour = t.colour;
+			colourSet = true;
+
+		}
+		else if (t.colour != colour) {
+
+			return false;
+
+		}
+
+		for (int j = 0; j < valueCount; j++) {
+
+			if (values[j] == t.value) {
+
+				return false;
+
+			}
+
+		}
+
+		values[valueCount++] = t.value;
+		nonJokers[nonCount++] = t;
+
+	}
+
+	if (nonCount == 0) {
+
+		return false;
+
+	}
+
+	sortAsc(values, valueCount);
+
+	Tile sortedNon[DECK_SIZE];
+	for (int i = 0; i < valueCount; i++) {
+
+		for (int j = 0; j < nonCount; j++) {
+
+			if (nonJokers[j].value == values[i]) {
+
+				sortedNon[i] = nonJokers[j];
+				break;
+
+			}
+
+		}
+
+	}
+
+	nonCount = valueCount;
+
+	for (int cut = 1; cut < nonCount; cut++) {
+
+		for (int jLeft = 0; jLeft <= jokerCount; jLeft++) {
+
+			int jRight = jokerCount - jLeft;
+
+			int leftCount = cut + jLeft;
+			int rightCount = (nonCount - cut) + jRight;
+
+			if (leftCount < 3 || rightCount < 3) {
+
+				continue;
+
+			}
+
+			Tile leftTiles[DECK_SIZE];
+			Tile rightTiles[DECK_SIZE];
+
+			int li = 0;
+			for (int i = 0; i < cut; i++) {
+
+				leftTiles[li++] = sortedNon[i];
+
+			}
+			for (int i = 0; i < jLeft; i++) {
+
+				leftTiles[li++] = jokers[i];
+
+			}
+			int ri = 0;
+			for (int i = cut; i < nonCount; i++) {
+
+				rightTiles[ri++] = sortedNon[i];
+
+			}
+			for (int i = 0; i < jRight; i++) {
+
+				rightTiles[ri++] = jokers[jLeft + i];
+
+			}
+
+			if (isValidSeriesCore(leftTiles, leftCount) && isValidSeriesCore(rightTiles, rightCount)) {
+
+				outA.count = leftCount;
+				for (int i = 0; i < leftCount; i++) {
+
+					outA.tiles[i] = leftTiles[i];
+
+				}
+				outB.count = rightCount;
+				for (int i = 0; i < rightCount; i++) {
+
+					outB.tiles[i] = rightTiles[i];
+
+				}
+
+				return true;
+
+			}
+
+		}
+
+	}
+
+	return false;
+
+}
+
+bool trySplitRemainingCombo(const TableCombination& in, TableCombination& outA, TableCombination& outB) {
+
+	if (isValidCombinationTiles(in.tiles, in.count)) {
+
+		return false;
+
+	}
+
+	return trySplitSeriesIntoTwoValid(in, outA, outB);
 
 }
