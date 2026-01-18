@@ -81,3 +81,17 @@ int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const
 bool trySplitSeriesIntoTwoValid(const TableCombination& in, TableCombination& outA, TableCombination& outB);
 bool trySplitRemainingCombo(const TableCombination& in, TableCombination& outA, TableCombination& outB);
 bool isRemainingTableComboOk(const TableCombination& modified);
+bool stealSinglePos(Player& player, const TableCombination& original, int pos, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[], int removePos[], int& removeCount);
+void removePositionsFromModified(TableCombination& modified, int removePos[], int removeCount);
+int finalizeStealWithSplitIfNeeded(TableCombination& modified, bool& didSplit, TableCombination& splitSecond);
+int filterUnusedHandSelection(const Player& player, int handSelected[], int handCount, const bool usedHand[]);
+bool prepareNewComboTiles(const Player& player, const Tile stolen[], int stolenCount, int handSelected[], int& handCount, const bool usedHand[], Tile newComboTiles[], int& newCount);
+int buildAllToRemove(const int replaceHandIndex[], int replaceCount, const int handSelected[], int handCount, int allToRemove[]);
+bool commitStealModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile newComboTiles[], int newCount, const int allToRemove[], int allCount);
+bool collectSeriesSplitData(const TableCombination& in, Tile nonJokers[], int& nonCount, Tile jokers[], int& jokerCount, int values[], int& valueCount, Colour& colour);
+void buildSortedNonJokers(const Tile nonJokers[], int nonCount, int values[], int valueCount, Tile sortedNon[]);
+bool tryAllCutsAndJokers(const Tile sortedNon[], int nonCount, const Tile jokers[], int jokerCount, TableCombination& outA, TableCombination& outB);
+bool chooseStealSource(const Table& table, int& tableIndex, TableCombination& original);
+int readStealPositions(const TableCombination& original, int selectedPos[], int& posCount);
+int buildStealResult(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[], bool& didSplit, TableCombination& splitSecond);
+int runStealModeLoop(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]);
