@@ -80,3 +80,4 @@ int handleModeAddToTable(Player& player, Table& table, int tableIndex, const Tab
 int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]);
 bool trySplitSeriesIntoTwoValid(const TableCombination& in, TableCombination& outA, TableCombination& outB);
 bool trySplitRemainingCombo(const TableCombination& in, TableCombination& outA, TableCombination& outB);
+bool isRemainingTableComboOk(const TableCombination& modified);

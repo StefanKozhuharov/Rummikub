@@ -1085,7 +1085,7 @@ bool addTileCombinationToTable(Table& table, const Tile tiles[], int count) {
 }
 
 int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
-	
+	//TODO make less lines
 	if (table.count == 0) {
 
 		cout << "Table is empty." << endl;
@@ -1129,6 +1129,7 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 
 	if (!applyStealToCombination(player, original, selectedPos, posCount, modified, stolen, stolenCount, replaceHandIndex, replaceCount, usedHand, didSplit, splitSecond)) {
 
+		cout << "Steal failed. Reselect tiles or choose another action." << endl;
 		return 0;
 
 	}
@@ -1223,13 +1224,11 @@ bool validateRemainingTableCombo(const TableCombination& modified) {
 
 	if (modified.count < 3) {
 
-		cout << "You can't steal like that (remaining would be too short)." << endl;
 		return false;
 
 	}
 	if (!isValidCombinationTiles(modified.tiles, modified.count)) {
 
-		cout << "You can't steal like that (remaining would be invalid)." << endl;
 		return false;
 
 	}
@@ -1492,7 +1491,6 @@ TurnResult handleSteal(Player& player, Table& table) {
 
 	}
 
-	cout << "Steal failed. Try again." << endl;
 	return TURN_CONTINUE;
 
 }
@@ -1573,7 +1571,7 @@ int readStealPositionsUI(const TableCombination& original, int selectedPos[], in
 }
 
 int applyStealToCombination(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[], bool& didSplit, TableCombination& splitSecond) {
-
+	//TODO make less lines
 	modified = original;
 
 	stolenCount = 0;
@@ -1656,6 +1654,12 @@ int applyStealToCombination(Player& player, const TableCombination& original, co
 		return 1;
 
 	}
+
+	if (isRemainingTableComboOk(modified)) {
+
+		return 1;
+
+	}
 	
 	TableCombination a, b;
 	if (trySplitRemainingCombo(modified, a, b)) {
@@ -1665,6 +1669,17 @@ int applyStealToCombination(Player& player, const TableCombination& original, co
 		didSplit = true;
 
 		return 1;
+
+	}
+
+	if (modified.count < 3) {
+
+		cout << "You can't steal like that (remaining would be too short)." << endl;
+
+	}
+	else {
+
+		cout << "You can't steal like that (remaining would be invalid)." << endl;
 
 	}
 
@@ -1758,7 +1773,7 @@ int handleModeAddToTable(Player& player, Table& table, int tableIndex, const Tab
 }
 
 int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]) {
-
+	//TODO make less lines
 	int handSelected[DECK_SIZE];
 	int handCount = 0;
 
@@ -1864,7 +1879,7 @@ int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const
 }
 
 bool trySplitSeriesIntoTwoValid(const TableCombination& in, TableCombination& outA, TableCombination& outB) {
-
+//TODO make less lines
 	if (in.count < 6) {
 
 		return false;
@@ -2024,5 +2039,17 @@ bool trySplitRemainingCombo(const TableCombination& in, TableCombination& outA, 
 	}
 
 	return trySplitSeriesIntoTwoValid(in, outA, outB);
+
+}
+
+bool isRemainingTableComboOk(const TableCombination& modified) {
+
+	if (modified.count < 3) {
+
+		return false;
+
+	}
+
+	return isValidCombinationTiles(modified.tiles, modified.count);
 
 }
