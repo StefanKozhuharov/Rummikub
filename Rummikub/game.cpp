@@ -1,3 +1,17 @@
+/**
+*
+* Solution to course project #07
+* Introduction to programming course
+* Faculty of Mathematics and Informatics of Sofia University
+* Winter semester 2025/2026
+*
+* @author Stefan Kozhuharov
+* @idnumber 9MIO600529
+* @compiler VC
+*
+* <containts all functions and structures needed for the game loop>
+*
+*/
 #include "game.h"
 #include "ui.h"
 #include <iostream>
