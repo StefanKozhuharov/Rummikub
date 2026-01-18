@@ -4,6 +4,7 @@
 
 using namespace std;
 
+// checks if a given character is a decimal digit
 bool isDigit(char symbol) {
 
 	return symbol >= '0' && symbol <= '9';
@@ -30,6 +31,8 @@ void sortDescending(int arr[], int n) {
 
 }
 
+// parses a positive integer from an input string
+// used by input parsing functions for reading tile positions
 int readNumber(const char input[], int& i) {
 
 	int number = 0;
@@ -63,6 +66,7 @@ void sortAsc(int arr[], int n) {
 
 }
 
+// prints a table combination's positions
 void printTableCombinationWithPositions(const TableCombination& combo) {
 
 	for (int i = 0; i < combo.count; i++) {
@@ -77,6 +81,7 @@ void printTableCombinationWithPositions(const TableCombination& combo) {
 
 }
 
+// reads and validates the number of players (2 to 4 are allowed)
 int chooseNumberOfPlayers() {
 
 	int numPlayers = 0;
@@ -93,6 +98,8 @@ int chooseNumberOfPlayers() {
 
 }
 
+// initializes the players and draws their hand of 14 tiles for each
+// returns false if deck doesn't have enough tiles (shouldn't be possible)
 bool initializePlayers(Player players[], int numPlayers) {
 
 	for (int i = 0; i < numPlayers; i++) {
@@ -113,6 +120,8 @@ bool initializePlayers(Player players[], int numPlayers) {
 
 }
 
+// prints a message to inform the player what actions they can make
+// if the player has done something they can end their turn without having to draw
 int chooseTurnAction(bool didSomething) {
 
 	int choice = 0;
@@ -157,6 +166,8 @@ int chooseTurnAction(bool didSomething) {
 
 }
 
+// draws one tile from the deck and adds it to the player's hand
+// the drawn tile can't be accessed again by reducing the remaining tiles value
 bool drawTileForPlayer(Player& player) {
 
 	Tile tile;
@@ -183,6 +194,8 @@ bool drawTileForPlayer(Player& player) {
 
 }
 
+// main turn loop for a single player
+// keeps asking the player to do something until he draws a tile or ends their turn after another action (apart from drawing)
 void playTurn(Player& player, int playerIndex, Table& table) {
 
 	cout << endl << "--- Player " << playerIndex + 1 << "'s turn ---" << endl;
@@ -245,6 +258,8 @@ void playTurn(Player& player, int playerIndex, Table& table) {
 
 }
 
+// removes the tiles selected by the player to place on the table from their hand
+// indexes are sorted in a descending order first to avoid shufling issues
 void removeSelectedTiles(Player& player, int selectedTiles[], int count) {
 
 	sortDescending(selectedTiles, count);
@@ -265,6 +280,9 @@ void removeSelectedTiles(Player& player, int selectedTiles[], int count) {
 
 }
 
+// checks if the game ending conditions are met
+// 1. a player's hand is empty
+// 2 the deck is empty -> winner is decided by who has the least ammount of points
 bool isGameOver(Player players[], int numPlayers, int& winnerIndex) {
 
 	for (int i = 0; i < numPlayers; i++) {
@@ -289,6 +307,7 @@ bool isGameOver(Player players[], int numPlayers, int& winnerIndex) {
 
 }
 
+// calculates the total point value of a player's hand
 int calculateHandPoints(const Player& player) {
 
 	int sum = 0;
@@ -312,6 +331,7 @@ int calculateHandPoints(const Player& player) {
 
 }
 
+// chooses the winner based on score
 int findWinnerByLowestScore(Player players[], int numPlayers) {
 
 	int winnerIndex = 0;
@@ -334,6 +354,8 @@ int findWinnerByLowestScore(Player players[], int numPlayers) {
 
 }
 
+// calculates the point value of the selected tiles during a player's turn
+// used for initial 30 rule
 int calculateSelectedTilesPoints(const Player& player, const int selectedTiles[], int count) {
 
 	int sum = 0;
@@ -360,6 +382,8 @@ int calculateSelectedTilesPoints(const Player& player, const int selectedTiles[]
 
 }
 
+// validates a group combination
+// these are 3-4 tiles of the same value, all different colours
 bool isValidGroup(const Player& player, const int selectedTiles[], int count) {
 
 	if (count < 3 || count > 4) {
@@ -410,6 +434,8 @@ bool isValidGroup(const Player& player, const int selectedTiles[], int count) {
 
 }
 
+// validates a series combination 
+// 3+ tiles of the same colour made up of numbers in a row in an ascending order 
 bool isValidSeries(const Player& player, const int selectedTiles[], int count) {
 	
 	Tile tiles[DECK_SIZE];
@@ -423,6 +449,7 @@ bool isValidSeries(const Player& player, const int selectedTiles[], int count) {
 
 }
 
+// validates every combination played by the player
 bool isValidMultipleCombination(const Player& player, const Combination combinations[], int combinationCount) {
 
 	for (int i = 0; i < combinationCount; i++) {
@@ -441,6 +468,8 @@ bool isValidMultipleCombination(const Player& player, const Combination combinat
 
 }
 
+// reads the input of the player to detect the multiple combinations he wants to play
+// combinations are seperated by '|'
 bool readMultipleTileSelection(const Player& player, Combination combinations[], int& combinationCount) {
 
 	const int MAX_INPUT = 1024;
@@ -472,6 +501,7 @@ bool readMultipleTileSelection(const Player& player, Combination combinations[],
 
 }
 
+// calculates the point value of all played tile combinations
 int calculateMultipleSelectedTilesPoints(const Player& player, const Combination combinations[], int combinationCount) {
 
 	int total = 0;
@@ -486,6 +516,8 @@ int calculateMultipleSelectedTilesPoints(const Player& player, const Combination
 
 }
 
+// checks if the combinations played have a total value of 30+, required for the first turn of each player
+// once this check becomes true, it stays that way
 bool checkInitial30Multiple(Player& player, const Combination combinations[], int combinationCount) {
 
 	if (player.hasInitial30) {
@@ -509,6 +541,7 @@ bool checkInitial30Multiple(Player& player, const Combination combinations[], in
 
 }
 
+// displayed the selected combinations and asks for verification from the player before playing them on the table
 int confirmSelectedCombinations(const Player& player, const Combination combinations[], int combinationCount) {
 
 	if (combinationCount == 0) {
@@ -564,6 +597,8 @@ int confirmSelectedCombinations(const Player& player, const Combination combinat
 
 }
 
+// parses the input of the player and places them into the combinations array
+// prevents the selection of the same tile multiple times
 void parseMultipleTileSelection(const Player& player, const char input[], Combination combinations[], int& combinationCount) {
 
 	combinationCount = 0;
@@ -639,6 +674,7 @@ void parseMultipleTileSelection(const Player& player, const char input[], Combin
 
 }
 
+// removes all selected tiles from the player's hand
 void removeMultipleSelectedTiles(Player& player, const Combination combinations[], int combinationCount) {
 
 	int allSelected[DECK_SIZE];
@@ -658,6 +694,8 @@ void removeMultipleSelectedTiles(Player& player, const Combination combinations[
 
 }
 
+// adds the selected combinations to the table
+// fails if the table is full (shouldn't be possible in normal gameplay)
 bool addCombinationsToTable(const Player& player, Table& table, const Combination combinations[], int combinationCount) {
 
 	if (table.count + combinationCount > MAX_TABLE_COMBINATIONS) {
@@ -695,6 +733,7 @@ bool addCombinationsToTable(const Player& player, Table& table, const Combinatio
 
 }
 
+// let's the player choose from which table combination they want to steal
 int chooseTableCombinationIndex(const Table& table) {
 
 	if (table.count == 0) {
@@ -717,6 +756,7 @@ int chooseTableCombinationIndex(const Table& table) {
 
 }
 
+// validates a group directly from a Tile array, which is used for "stolen" combos
 bool isValidGroupTiles(const Tile tiles[], int count) {
 
 	if (count < 3 || count > 4) {
@@ -764,18 +804,22 @@ bool isValidGroupTiles(const Tile tiles[], int count) {
 
 }
 
+// validates a series dirrectly from a Tile array
 bool isValidSeriesTiles(const Tile tiles[], int count) {
 	
 	return isValidSeriesCore(tiles, count);
 
 }
 
+// validates if a combination is either a group of series
 bool isValidCombinationTiles(const Tile tiles[], int count) {
 
 	return isValidGroupTiles(tiles, count) || isValidSeriesTiles(tiles, count);
 
 }
 
+// reads a single selection of tiles from a player's hand (or allows drawing to cancel)
+// used when adding tiles to the table or when selecting tiles to build a new combo during stealing
 bool readSingleSelectionOrDraw(const Player& player, int selectedTiles[], int& count) {
 
 	const int MAX_INPUT = 1024;
@@ -807,6 +851,8 @@ bool readSingleSelectionOrDraw(const Player& player, int selectedTiles[], int& c
 
 }
 
+// adds one or more tiles from the player's hand to an existing table combination.
+// reverts the change if the resulting table combination is invalid.
 int addTilesToTableCombination(Player& player, Table& table) {
 
 	if (table.count == 0) {
@@ -862,6 +908,8 @@ int addTilesToTableCombination(Player& player, Table& table) {
 
 }
 
+// parses a list of hand indices from a single line into selectedTiles[].
+// prevents duplicates in the same selection.
 void parseSingleTileSelection(const Player& player, const char input[], int selectedTiles[], int& count) {
 
 	count = 0;
@@ -903,6 +951,7 @@ void parseSingleTileSelection(const Player& player, const char input[], int sele
 
 }
 
+// shows selected tiles and asks for a confirmation
 int confirmSelectedTilesSingle(const Player& player, const int selectedTiles[], int count) {
 
 	if (count == 0) {
@@ -950,6 +999,8 @@ int confirmSelectedTilesSingle(const Player& player, const int selectedTiles[], 
 
 }
 
+// parses table positions from input into selectedPos[]
+// comboCount is the length of the chosen table combination
 void parseTableTilePositions(const char input[], int selectedPos[], int& count, int comboCount) {
 
 	count = 0;
@@ -992,6 +1043,7 @@ void parseTableTilePositions(const char input[], int selectedPos[], int& count, 
 
 }
 
+// Prints what will be stolen from a specific table combination and asks for confirmation
 int confirmStealSelection(const TableCombination combo, const int selectedPos[], int count) {
 
 	if (count == 0) {
@@ -1039,6 +1091,8 @@ int confirmStealSelection(const TableCombination combo, const int selectedPos[],
 
 }
 
+// removes selected positions from a table combination and outputs them into stolen[]
+// uses descending removal to avoid index shifting problems
 void removeTilesFromTableCombination(TableCombination& combo, int selectedPos[], int count, Tile stolen[], int& stolenCount) {
 
 	stolenCount = 0;
@@ -1061,6 +1115,8 @@ void removeTilesFromTableCombination(TableCombination& combo, int selectedPos[],
 
 }
 
+// adds a new combination to the table as a separate table combination
+// returns false if the table is full (shouldn't be possible in normal gameplay)
 bool addTileCombinationToTable(Table& table, const Tile tiles[], int count) {
 
 	if (table.count >= MAX_TABLE_COMBINATIONS) {
@@ -1084,6 +1140,11 @@ bool addTileCombinationToTable(Table& table, const Tile tiles[], int count) {
 
 }
 
+// main steal flow
+// choose a source combination from which to steal
+// choose which tiles to steal
+// validate if the remaining tiles form a combo
+// decide what to do with the stolen tiles
 int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 
 	int tableIndex = -1;
@@ -1135,6 +1196,7 @@ int stealFromTableAndCreateNewCombination(Player& player, Table& table) {
 
 }
 
+// ensures the player has already placed their initial 30+ points before using table-modification actions
 bool ensureInitial30(const Player& player) {
 
 	if (!player.hasInitial30) {
@@ -1148,6 +1210,7 @@ bool ensureInitial30(const Player& player) {
 
 }
 
+// prints the combinations that are about to be played from the player's hand 
 void printPlayedCombinations(const Player& player, const Combination combos[], int comboCount) {
 
 	cout << "Played: " << endl;
@@ -1167,6 +1230,7 @@ void printPlayedCombinations(const Player& player, const Combination combos[], i
 
 }
 
+// build a Tile array representing the stolen tiles + the selected tiles to validate a new combination
 int buildNewComboFromStolenAndHand(const Player& player, const Tile stolen[], int stolenCount, const int handSelected[], int handCount, Tile out[]) {
 
 	int n = 0;
@@ -1185,6 +1249,7 @@ int buildNewComboFromStolenAndHand(const Player& player, const Tile stolen[], in
 
 }
 
+// reads a single hand tile index to use as a joker replacement (disallows using the same tile or another joker)
 int readReplacementTileIndex(const Player& player, const bool used[], const char* prompt) {
 
 	while (true) {
@@ -1224,6 +1289,8 @@ int readReplacementTileIndex(const Player& player, const bool used[], const char
 
 }
 
+// forces the player to place each stolen tile onto some existing table combination
+// this is used when the player can't or doesn't want to use the stolen tiles to form a new combination
 bool tryPlaceStolenTilesOnTable(Table& table, const Tile stolen[], int stolenCount) {
 
 	if (stolenCount == 0) {
@@ -1285,6 +1352,7 @@ bool tryPlaceStolenTilesOnTable(Table& table, const Tile stolen[], int stolenCou
 
 }
 
+// checks if the player has a tile with which to replace a stolen joker (the tile needs to be a non-joker tile)
 bool hasAnyValidJokerReplacement(const Player& player, const TableCombination& modified, int jokerPos, const bool usedHand[]) {
 
 	for (int i = 0; i < player.handCount; i++) {
@@ -1316,6 +1384,8 @@ bool hasAnyValidJokerReplacement(const Player& player, const TableCombination& m
 
 }
 
+// extracts series validation data
+// returns false if the tiles cannot represent a potential series
 bool buildSeriesData(const Tile tiles[], int count, int values[], int& valueCount, int& jokers, Colour& colour) {
 
 	valueCount = 0;
@@ -1361,6 +1431,7 @@ bool buildSeriesData(const Tile tiles[], int count, int values[], int& valueCoun
 
 }
 
+// checks that tiles can form a consecutive sequence of the same colour, allowing jokers to fill gaps between sorted values.
 bool isValidSeriesCore(const Tile tiles[], int count) {
 
 	if (count < 3) {
@@ -1392,6 +1463,8 @@ bool isValidSeriesCore(const Tile tiles[], int count) {
 
 }
 
+// handles action "Add to existing table combination" for a turn.
+// requires initial 30 points already completed, returns a TurnResult for the main turn loop.
 TurnResult handleAddToTable(Player& player, Table& table) {
 
 	if (!ensureInitial30(player)) {
@@ -1418,6 +1491,8 @@ TurnResult handleAddToTable(Player& player, Table& table) {
 
 }
 
+// handles action "Steal tiles from table" for a turn.
+// requires initial 30 points already completed, returns a TurnResult for the main turn loop.
 TurnResult handleSteal(Player& player, Table& table) {
 
 	if (!ensureInitial30(player)) {
@@ -1443,6 +1518,8 @@ TurnResult handleSteal(Player& player, Table& table) {
 
 }
 
+// handles action "Play new combinations" for a turn.
+// reads multiple combinations, validates them, checks initial 30 rule, adds them to the table, and removes from hand.
 TurnResult handlePlayNewCombinations(Player& player, Table& table) {
 
 	Combination combinations[DECK_SIZE];
@@ -1482,6 +1559,8 @@ TurnResult handlePlayNewCombinations(Player& player, Table& table) {
 
 }
 
+// UI loop for stealing: prints the chosen table combination and reads positions until confirmed or canceled.
+// returns 1=confirmed, 0=reselect/cancel, -1=draw.
 int readStealPositionsUI(const TableCombination& original, int selectedPos[], int& posCount) {
 
 	const int MAX_INPUT = 1024;
@@ -1518,6 +1597,10 @@ int readStealPositionsUI(const TableCombination& original, int selectedPos[], in
 
 }
 
+// applies a steal selection to a chosen table combination:
+// 1. handles joker stealing by forcing a valid replacement from hand
+// 2. removes non-joker positions
+// 3. validates the remaining combination or attempts to split it into two valid series.
 int applyStealToCombination(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[], bool& didSplit, TableCombination& splitSecond) {
 
 	modified = original;
@@ -1544,6 +1627,11 @@ int applyStealToCombination(Player& player, const TableCombination& original, co
 
 }
 
+// reads and validates the steal mode choice:
+// c = create new combination from stolen tiles + hand tiles
+// a = place stolen tiles onto existing table combinations
+// s = reselect stolen tiles
+// d = draw a tile (ends turn)
 char chooseStealMode() {
 
 	char mode;
@@ -1566,6 +1654,7 @@ char chooseStealMode() {
 
 }
 
+// removes the indexes from hand, requires them to be unique (so a tile can't be removed twice)
 void removeUniqueHandIndexes(Player& player, const int index[], int n) {
 
 	bool mark[DECK_SIZE] = { false };
@@ -1588,6 +1677,7 @@ void removeUniqueHandIndexes(Player& player, const int index[], int n) {
 
 }
 
+// steal mode 'a': commits the modified (remaining) table combination (and optional split), then forces the player to place all stolen tiles onto the table in valid ways.
 int handleModeAddToTable(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount) {
 
 	Table backup = table;
@@ -1629,6 +1719,8 @@ int handleModeAddToTable(Player& player, Table& table, int tableIndex, const Tab
 
 }
 
+// steal mode 'c': user selects extra hand tiles, builds a new combination with stolen tiles, 
+// validates it, commits table modifications (including split), and removes all used hand tiles.
 int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]) {
 
 	int handSelected[DECK_SIZE];
@@ -1662,6 +1754,8 @@ int handleModeCreateNewCombo(Player& player, Table& table, int tableIndex, const
 
 }
 
+// attempts to split a (broken) series into two valid series (each length >= 3).
+// this supports the "split" mechanic when stealing middle tiles from a long sequence.
 bool trySplitSeriesIntoTwoValid(const TableCombination& in, TableCombination& outA, TableCombination& outB) {
 
 	if (in.count < 6) {
@@ -1695,6 +1789,8 @@ bool trySplitSeriesIntoTwoValid(const TableCombination& in, TableCombination& ou
 
 }
 
+// tries to split the remaining invalid table combination.
+// currently only supports splitting series (not groups, since groups can be a maximum of 4 tiles), so it delegates to trySplitSeriesIntoTwoValid.
 bool trySplitRemainingCombo(const TableCombination& in, TableCombination& outA, TableCombination& outB) {
 
 	if (isValidCombinationTiles(in.tiles, in.count)) {
@@ -1707,6 +1803,7 @@ bool trySplitRemainingCombo(const TableCombination& in, TableCombination& outA, 
 
 }
 
+// checks if the remaining table combination is valid after stealing
 bool isRemainingTableComboOk(const TableCombination& modified) {
 
 	if (modified.count < 3) {
@@ -1719,6 +1816,9 @@ bool isRemainingTableComboOk(const TableCombination& modified) {
 
 }
 
+// processes stealing a single position from the original table combination.
+// 1. if it's a joker, forces the player to replace it with a valid hand tile first.
+// 2. if it's a normal tile, it is marked for removal from the remaining combination.
 bool stealSinglePos(Player& player, const TableCombination& original, int pos, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[], int removePos[], int& removeCount) {
 
 	if (pos < 0 || pos >= original.count) {
@@ -1768,6 +1868,7 @@ bool stealSinglePos(Player& player, const TableCombination& original, int pos, T
 
 }
 
+// removes multiple positions from the modified combination (descending order to avoid shifting issues).
 void removePositionsFromModified(TableCombination& modified, int removePos[], int removeCount) {
 
 	sortDescending(removePos, removeCount);
@@ -1787,6 +1888,10 @@ void removePositionsFromModified(TableCombination& modified, int removePos[], in
 
 }
 
+// final step after stealing:
+// if remaining combo is valid -> ok,
+// else try split into two series -> ok,
+// else print a reason why the steal is impossible.
 int finalizeStealWithSplitIfNeeded(TableCombination& modified, bool& didSplit, TableCombination& splitSecond) {
 
 	if (isRemainingTableComboOk(modified)) {
@@ -1820,6 +1925,7 @@ int finalizeStealWithSplitIfNeeded(TableCombination& modified, bool& didSplit, T
 
 }
 
+// filters out any hand indexes that were already used as joker replacements during the same steal action.
 int filterUnusedHandSelection(const Player& player, int handSelected[], int handCount, const bool usedHand[]) {
 
 	int filtered[DECK_SIZE];
@@ -1846,6 +1952,8 @@ int filterUnusedHandSelection(const Player& player, int handSelected[], int hand
 
 }
 
+// builds and validates the new combination for steal mode 'c' (stolen tiles + chosen hand tiles).
+// returns false if all selected tiles are invalid/used or if the resulting combo is not valid.
 bool prepareNewComboTiles(const Player& player, const Tile stolen[], int stolenCount, int handSelected[], int& handCount, const bool usedHand[], Tile newComboTiles[], int& newCount) {
 
 	handCount = filterUnusedHandSelection(player, handSelected, handCount, usedHand);
@@ -1870,6 +1978,7 @@ bool prepareNewComboTiles(const Player& player, const Tile stolen[], int stolenC
 
 }
 
+// merges replacement-tile indexes and selected hand indexes into a single list for removal from the hand.
 int buildAllToRemove(const int replaceHandIndex[], int replaceCount, const int handSelected[], int handCount, int allToRemove[]) {
 
 	int allCount = 0;
@@ -1889,6 +1998,11 @@ int buildAllToRemove(const int replaceHandIndex[], int replaceCount, const int h
 
 }
 
+// commits steal mode 'c' changes atomically using a table backup:
+// 1. writes modified remaining combo,
+// 2. optionally appends splitSecond,
+// 3. adds the new combination,
+// 4. removes used hand tiles if everything succeeds.
 bool commitStealModeCreateNewCombo(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile newComboTiles[], int newCount, const int allToRemove[], int allCount) {
 
 	Table backup = table;
@@ -1930,6 +2044,11 @@ bool commitStealModeCreateNewCombo(Player& player, Table& table, int tableIndex,
 
 }
 
+// collects and validates data needed for splitting a series:
+// 1. separates jokers and non-jokers,
+// 2. enforces same colour,
+// 3. enforces distinct values,
+// 4. fills "values" for sorting.
 bool collectSeriesSplitData(const TableCombination& in, Tile nonJokers[], int& nonCount, Tile jokers[], int& jokerCount, int values[], int& valueCount, Colour& colour) {
 
 	nonCount = 0;
@@ -1980,6 +2099,7 @@ bool collectSeriesSplitData(const TableCombination& in, Tile nonJokers[], int& n
 
 }
 
+// builds a sorted array of non-joker tiles based on sorted "values" (ascending)
 void buildSortedNonJokers(const Tile nonJokers[], int nonCount, int values[], int valueCount, Tile sortedNon[]) {
 
 	sortAsc(values, valueCount);
@@ -2001,6 +2121,8 @@ void buildSortedNonJokers(const Tile nonJokers[], int nonCount, int values[], in
 
 }
 
+// tries all ways to split a series into left/right while distributing jokers between sides.
+// returns true if it finds two valid series (each length >= 3).
 bool tryAllCutsAndJokers(const Tile sortedNon[], int nonCount, const Tile jokers[], int jokerCount, TableCombination& outA, TableCombination& outB) {
 
 	for (int cut = 1; cut < nonCount; cut++) {
@@ -2073,6 +2195,7 @@ bool tryAllCutsAndJokers(const Tile sortedNon[], int nonCount, const Tile jokers
 
 }
 
+// helper for steal flow: verifies the table isn't empty and lets the player choose a source combination.
 bool chooseStealSource(const Table& table, int& tableIndex, TableCombination& original) {
 
 	if (table.count == 0) {
@@ -2094,6 +2217,7 @@ bool chooseStealSource(const Table& table, int& tableIndex, TableCombination& or
 
 }
 
+// wrapper around the steal positions UI to keep naming consistent in the steal flow.
 int readStealPositions(const TableCombination& original, int selectedPos[], int& posCount) {
 
 	posCount = 0;
@@ -2101,6 +2225,8 @@ int readStealPositions(const TableCombination& original, int selectedPos[], int&
 
 }
 
+// builds the result of the steal attempt (remaining combo, stolen tiles, replacements, split state).
+// prints an error message if the steal is not allowed.
 int buildStealResult(Player& player, const TableCombination& original, const int selectedPos[], int posCount, TableCombination& modified, Tile stolen[], int& stolenCount, int replaceHandIndex[], int& replaceCount, bool usedHand[], bool& didSplit, TableCombination& splitSecond) {
 
 	if (!applyStealToCombination(player, original, selectedPos, posCount, modified, stolen, stolenCount, replaceHandIndex, replaceCount, usedHand, didSplit, splitSecond)) {
@@ -2114,6 +2240,8 @@ int buildStealResult(Player& player, const TableCombination& original, const int
 
 }
 
+// runs the post-steal mode loop until the player completes a valid action, reselects, or draws.
+// delegates to handleModeAddToTable / handleModeCreateNewCombo for the actual commit logic.
 int runStealModeLoop(Player& player, Table& table, int tableIndex, const TableCombination& modified, bool didSplit, const TableCombination& splitSecond, const Tile stolen[], int stolenCount, const int replaceHandIndex[], int replaceCount, const bool usedHand[]) {
 
 	while (true) {
