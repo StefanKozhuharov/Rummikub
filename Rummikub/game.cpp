@@ -1185,23 +1185,6 @@ int buildNewComboFromStolenAndHand(const Player& player, const Tile stolen[], in
 
 }
 
-bool validateRemainingTableCombo(const TableCombination& modified) {
-
-	if (modified.count < 3) {
-
-		return false;
-
-	}
-	if (!isValidCombinationTiles(modified.tiles, modified.count)) {
-
-		return false;
-
-	}
-
-	return true;
-
-}
-
 int readReplacementTileIndex(const Player& player, const bool used[], const char* prompt) {
 
 	while (true) {
